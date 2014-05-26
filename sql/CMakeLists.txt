@@ -86,7 +86,7 @@ SET (SQL_SOURCE
                create_options.cc multi_range_read.cc
                opt_index_cond_pushdown.cc opt_subselect.cc
                opt_table_elimination.cc sql_expression_cache.cc
-               gcalc_slicescan.cc gcalc_tools.cc
+               gcalc_slicescan.cc gcalc_tools.cc opt_costmodel.h opt_costmodel.cc
 			   threadpool_common.cc 
 			   ../sql-common/mysql_async.c
                my_apc.cc my_apc.h

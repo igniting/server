@@ -52,6 +52,7 @@
 #include "log_slow.h"
 #include "sql_derived.h"
 #include "sql_statistics.h"
+#include "opt_costmodel.h"
 
 #include "debug_sync.h"          // DEBUG_SYNC
 #include <m_ctype.h>
@@ -5888,8 +5889,8 @@ best_access_path(JOIN      *join,
             if (table->covering_keys.is_set(key))
               tmp= table->file->keyread_time(key, 1, (ha_rows) tmp);
             else
-              tmp= table->file->read_time(key, 1,
-                                          (ha_rows) MY_MIN(tmp,s->worst_seeks));
+              tmp= get_read_time_factor(thd) * table->file->read_time(key, 
+                  1, (ha_rows) MY_MIN(tmp,s->worst_seeks));
             tmp*= record_count;
           }
         }

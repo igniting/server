@@ -53,3 +53,9 @@ INSERT INTO tmp_proxies_priv VALUES ('localhost', 'root', '', '', TRUE, '', now(
 REPLACE INTO tmp_proxies_priv SELECT @current_hostname, 'root', '', '', TRUE, '', now() FROM DUAL WHERE @current_hostname != 'localhost';
 INSERT INTO  proxies_priv SELECT * FROM tmp_proxies_priv WHERE @had_proxies_priv_table=0;
 DROP TABLE tmp_proxies_priv;
+
+CREATE TEMPORARY TABLE tmp_all_constants LIKE all_constants;
+INSERT INTO tmp_all_constants VALUES ('READ_TIME_FACTOR', 1.0);
+INSERT INTO tmp_all_constants VALUES ('SCAN_TIME_FACTOR', 1.0);
+INSERT INTO all_constants SELECT * FROM tmp_all_constants WHERE @had_all_constants_table=0;
+DROP TABLE tmp_all_constants;

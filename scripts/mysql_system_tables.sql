@@ -229,3 +229,10 @@ CREATE TABLE IF NOT EXISTS index_stats (db_name varchar(64) NOT NULL, table_name
 -- we avoid mixed-engine transactions.
 set storage_engine=@orig_storage_engine;
 CREATE TABLE IF NOT EXISTS gtid_slave_pos (domain_id INT UNSIGNED NOT NULL, sub_id BIGINT UNSIGNED NOT NULL, server_id INT UNSIGNED NOT NULL, seq_no BIGINT UNSIGNED NOT NULL, PRIMARY KEY (domain_id, sub_id)) comment='Replication slave GTID position';
+
+-- Tables for Self Tuning Cost Optimizer
+
+CREATE TABLE IF NOT EXISTS all_constants (const_name varchar(64) NOT NULL, const_value double NOT NULL, PRIMARY KEY (const_name) ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_bin comment='Constants for optimizer';
+
+-- Remember for later if all_constants table already existed
+set @had_all_constants_table= @@warning_count != 0;
