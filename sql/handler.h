@@ -33,6 +33,7 @@
 #include "structs.h"                            /* SHOW_COMP_OPTION */
 #include "sql_array.h"          /* Dynamic_array<> */
 #include "mdl.h"
+#include "opt_costmodel.h"
 
 #include <my_compare.h>
 #include <ft_global.h>
@@ -2741,7 +2742,8 @@ public:
     reset_statistics();
   }
   virtual double scan_time()
-  { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
+  { return Cost_factors::get_scan_time_factor() *
+            (ulonglong2double(stats.data_file_length) / IO_SIZE + 2); }
 
   /**
      The cost of reading a set of ranges from the table using an index
@@ -2755,7 +2757,7 @@ public:
      using an index by calling it using read_time(index, 1, table_size).
   */
   virtual double read_time(uint index, uint ranges, ha_rows rows)
-  { return rows2double(ranges+rows); }
+  { return Cost_factors::get_read_time_factor() * rows2double(ranges+rows); }
 
   /**
     Calculate cost of 'keyread' scan for given index and number of records.

@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS gtid_slave_pos (domain_id INT UNSIGNED NOT NULL, sub_
 
 -- Tables for Self Tuning Cost Optimizer
 
-CREATE TABLE IF NOT EXISTS all_constants (const_name varchar(64) NOT NULL, const_value double NOT NULL, PRIMARY KEY (const_name) ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_bin comment='Constants for optimizer';
+CREATE TABLE IF NOT EXISTS optimizer_cost_factors (const_name varchar(64) NOT NULL, const_value double NOT NULL, PRIMARY KEY (const_name) ) ENGINE=MyISAM CHARACTER SET utf8 COLLATE utf8_bin comment='Constants for optimizer';
 
 -- Remember for later if all_constants table already existed
-set @had_all_constants_table= @@warning_count != 0;
+set @had_optimizer_cost_factors_table= @@warning_count != 0;

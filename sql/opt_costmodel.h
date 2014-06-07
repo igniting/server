@@ -1,15 +1,25 @@
 /* Interface to get constants */
 
-#ifndef _opt_costmodel_h
-#define _opt_costmodel_h
+#ifndef SQL_OPT_COSTMODEL_INCLUDED
+#define SQL_OPT_COSTMODEL_INCLUDED
 
-enum enum_all_constants_col
+class Cost_factors
 {
-  ALL_CONSTANTS_CONST_NAME,
-  ALL_CONSTANTS_CONST_VALUE
+private:
+  static bool isInitialized;
+  static double read_time_factor;
+  static double scan_time_factor;
+
+public:
+  static void init();
+  static inline double get_read_time_factor()
+  {
+    return read_time_factor;
+  }
+  static inline double get_scan_time_factor()
+  {
+    return scan_time_factor;
+  }
 };
 
-double get_read_time_factor(THD *thd);
-double get_scan_time_factor(THD *thd);
-
-#endif /* _opt_costmodel_h */
+#endif /* SQL_OPT_COSTMODEL_INCLUDED */

@@ -51,6 +51,7 @@
 #include "sql_manager.h"  // stop_handle_manager, start_handle_manager
 #include "sql_expression_cache.h" // subquery_cache_miss, subquery_cache_hit
 #include "sys_vars_shared.h"
+#include "opt_costmodel.h"
 
 #include <m_ctype.h>
 #include <my_dir.h>
@@ -5411,6 +5412,8 @@ int mysqld_main(int argc, char **argv)
     udf_init();
 #endif
   }
+
+  Cost_factors::init();
 
   init_status_vars();
   if (opt_bootstrap) /* If running with bootstrap, do not start replication. */
