@@ -1,9 +1,37 @@
 --disable_warnings
-DROP TABLE IF EXISTS t1;
+DROP DATABASE IF EXISTS world;
 --enable_warnings
 
-CREATE TABLE t1 (a INT);
-INSERT INTO t1 VALUES (1);
-SELECT * FROM t1;
+CREATE DATABASE world;
+use world;
 
-DROP TABLE t1;
+--source include/world_schema.inc
+--disable_query_log
+--disable_result_log
+--disable_warnings
+--source include/world.inc
+--enable_query_log
+--enable_result_log
+--enable_warnings
+
+EXPLAIN
+  SELECT c.name, ci.name FROM Country c, City ci
+    WHERE c.capital=ci.id;
+
+use mysql;
+
+UPDATE optimizer_cost_factors
+SET const_value=1000.0
+WHERE const_name='READ_TIME_FACTOR';
+
+--enable_reconnect
+--exec echo "restart" > $MYSQLTEST_VARDIR/tmp/mysqld.1.expect
+--source include/wait_until_connected_again.inc
+
+use world;
+
+EXPLAIN
+  SELECT c.name, ci.name FROM Country c, City ci
+    WHERE c.capital=ci.id;
+
+DROP DATABASE world;

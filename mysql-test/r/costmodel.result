@@ -1,7 +1,46 @@
-DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (a INT);
-INSERT INTO t1 VALUES (1);
-SELECT * FROM t1;
-a
-1
-DROP TABLE t1;
+DROP DATABASE IF EXISTS world;
+CREATE DATABASE world;
+use world;
+CREATE TABLE Country (
+Code char(3) NOT NULL default '',
+Name char(52) NOT NULL default '',
+SurfaceArea float(10,2) NOT NULL default '0.00',
+Population int(11) NOT NULL default '0',
+Capital int(11) default NULL,
+PRIMARY KEY  (Code),
+UNIQUE INDEX (Name)
+);
+CREATE TABLE City (
+ID int(11) NOT NULL auto_increment,
+Name char(35) NOT NULL default '',
+Country char(3) NOT NULL default '',
+Population int(11) NOT NULL default '0',
+PRIMARY KEY  (ID),
+INDEX (Population),
+INDEX (Country) 
+);
+CREATE TABLE CountryLanguage (
+Country char(3) NOT NULL default '',
+Language char(30) NOT NULL default '',
+Percentage float(3,1) NOT NULL default '0.0',
+PRIMARY KEY  (Country, Language),
+INDEX (Percentage)
+);
+EXPLAIN
+SELECT c.name, ci.name FROM Country c, City ci
+WHERE c.capital=ci.id;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	c	ALL	NULL	NULL	NULL	NULL	239	Using where
+1	SIMPLE	ci	eq_ref	PRIMARY	PRIMARY	4	world.c.Capital	1	
+use mysql;
+UPDATE optimizer_cost_factors
+SET const_value=1000.0
+WHERE const_name='READ_TIME_FACTOR';
+use world;
+EXPLAIN
+SELECT c.name, ci.name FROM Country c, City ci
+WHERE c.capital=ci.id;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	c	ALL	NULL	NULL	NULL	NULL	239	Using where
+1	SIMPLE	ci	eq_ref	PRIMARY	PRIMARY	4	world.c.Capital	1	
+DROP DATABASE world;
