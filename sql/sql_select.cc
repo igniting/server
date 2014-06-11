@@ -5888,7 +5888,7 @@ best_access_path(JOIN      *join,
             if (table->covering_keys.is_set(key))
               tmp= table->file->keyread_time(key, 1, (ha_rows) tmp);
             else
-              tmp= table->file->read_time(key, 1,
+              tmp= table->file->ha_read_time(key, 1,
                                           (ha_rows) MY_MIN(tmp,s->worst_seeks));
             tmp*= record_count;
           }
@@ -6053,7 +6053,7 @@ best_access_path(JOIN      *join,
             if (table->covering_keys.is_set(key))
               tmp= table->file->keyread_time(key, 1, (ha_rows) tmp);
             else
-              tmp= table->file->read_time(key, 1,
+              tmp= table->file->ha_read_time(key, 1,
                                           (ha_rows) MY_MIN(tmp,s->worst_seeks));
             tmp*= record_count;
           }
@@ -6186,7 +6186,7 @@ best_access_path(JOIN      *join,
     {
       /* Estimate cost of reading table. */
       if (s->table->force_index && !best_key) // index scan
-        tmp= s->table->file->read_time(s->ref.key, 1, s->records);
+        tmp= s->table->file->ha_read_time(s->ref.key, 1, s->records);
       else // table scan
         tmp= s->scan_time();
 
@@ -11236,7 +11236,7 @@ double JOIN_TAB::scan_time()
     else
     {
       found_records= records= table->stat_records();
-      read_time= table->file->scan_time();
+      read_time= table->file->ha_scan_time();
       /*
         table->quick_condition_rows has already been set to
         table->file->stats.records
@@ -24643,7 +24643,7 @@ test_if_cheaper_ordering(const JOIN_TAB *tab, ORDER *order, TABLE *table,
       fanout*= join->best_positions[i].records_read; // fanout is always >= 1
   }
   else
-    read_time= table->file->scan_time();
+    read_time= table->file->ha_scan_time();
 
   /*
     Calculate the selectivity of the ref_key for REF_ACCESS. For
@@ -24802,7 +24802,7 @@ test_if_cheaper_ordering(const JOIN_TAB *tab, ORDER *order, TABLE *table,
           index entry.
         */
         index_scan_time= select_limit/rec_per_key *
-                         MY_MIN(rec_per_key, table->file->scan_time());
+                         MY_MIN(rec_per_key, table->file->ha_scan_time());
         if ((ref_key < 0 && (group || table->force_index || is_covering)) ||
             index_scan_time < read_time)
         {

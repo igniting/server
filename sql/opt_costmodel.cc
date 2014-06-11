@@ -17,8 +17,14 @@ enum cost_factors_col
 };
 
 /* Name of the constants present in table */
-static const LEX_STRING read_time_factor_name = { C_STRING_WITH_LEN("READ_TIME_FACTOR") };
-static const LEX_STRING scan_time_factor_name = { C_STRING_WITH_LEN("SCAN_TIME_FACTOR") };
+struct st_factor {
+  const char *name;
+  double *value;
+};
+
+st_factor factors[] = {{"READ_TIME_FACTOR", &Cost_factors::read_time_factor},
+                       {"SCAN_TIME_FACTOR", &Cost_factors::scan_time_factor},
+                       {0, 0}};
 
 /* Helper functions for Cost_factors::init() */
 
@@ -32,17 +38,6 @@ inline int open_table(THD *thd, TABLE_LIST *table,
                         table_name.length, table_name.str, lock_type_arg);
   return open_system_tables_for_read(thd, table, backup);
 }
-
-static inline void clean_up(THD *thd)
-{
-  close_mysql_tables(thd);
-  delete thd;
-}
-
-/* Initialize static class members */
-bool Cost_factors::isInitialized= false;
-double Cost_factors::read_time_factor= 1.0;
-double Cost_factors::scan_time_factor= 1.0;
 
 /* Interface functions */
 
@@ -68,36 +63,38 @@ void Cost_factors::init()
 
   if(open_table(new_thd, &table_list, &open_tables_backup, FALSE))
   {
-    clean_up(new_thd);
-    DBUG_VOID_RETURN;
+    goto end;
   }
 
   table= table_list.table;
   if(init_read_record(&read_record_info, new_thd, table, NULL, 1, 0, FALSE))
   {
-    clean_up(new_thd);
-    DBUG_VOID_RETURN;
+    goto end;
   }
 
   table->use_all_columns();
   while (!read_record_info.read_record(&read_record_info))
   {
-    LEX_STRING const_name;
-    const_name.str= get_field(&mem, table->field[COST_FACTORS_CONST_NAME]);
-    const_name.length= strlen(const_name.str);
-
+    char *const_name= get_field(&mem, table->field[COST_FACTORS_CONST_NAME]);
     double const_value;
     const_value= table->field[COST_FACTORS_CONST_VALUE]->val_real();
-    if(!strcmp(const_name.str, read_time_factor_name.str))
+    st_factor *f;
+    for(f=factors; f->name; f++)
     {
-      Cost_factors::read_time_factor= const_value;
+      if(strcasecmp(f->name, const_name) == 0)
+      {
+        *(f->value)= const_value;
+        break;
+      }
     }
-    else if(!strcmp(const_name.str, scan_time_factor_name.str))
-    {
-      Cost_factors::scan_time_factor= const_value;
-    }
+
+    if(f->name == 0)
+      sql_print_warning("Invalid row in the optimizer_cost_factors_table: %s",
+          const_name);
   }
 
-  clean_up(new_thd);
+end:
+  close_mysql_tables(new_thd);
+  delete new_thd;
   DBUG_VOID_RETURN;
 }

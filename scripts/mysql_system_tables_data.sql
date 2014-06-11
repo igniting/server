@@ -54,8 +54,5 @@ REPLACE INTO tmp_proxies_priv SELECT @current_hostname, 'root', '', '', TRUE, ''
 INSERT INTO  proxies_priv SELECT * FROM tmp_proxies_priv WHERE @had_proxies_priv_table=0;
 DROP TABLE tmp_proxies_priv;
 
-CREATE TEMPORARY TABLE tmp_optimizer_cost_factors LIKE optimizer_cost_factors;
-INSERT INTO tmp_optimizer_cost_factors VALUES ('READ_TIME_FACTOR', 1.0);
-INSERT INTO tmp_optimizer_cost_factors VALUES ('SCAN_TIME_FACTOR', 1.0);
-INSERT INTO optimizer_cost_factors SELECT * FROM tmp_optimizer_cost_factors WHERE @had_optimizer_cost_factors_table=0;
-DROP TABLE tmp_optimizer_cost_factors;
+INSERT INTO optimizer_cost_factors VALUES ('READ_TIME_FACTOR', 1.0);
+INSERT INTO optimizer_cost_factors VALUES ('SCAN_TIME_FACTOR', 1.0);

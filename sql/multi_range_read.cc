@@ -1812,7 +1812,7 @@ void get_sweep_read_cost(TABLE *table, ha_rows nrows, bool interrupted,
   cost->reset();
   if (table->file->primary_key_is_clustered())
   {
-    cost->io_count= table->file->read_time(table->s->primary_key,
+    cost->io_count= table->file->ha_read_time(table->s->primary_key,
                                            (uint) nrows, nrows);
   }
   else

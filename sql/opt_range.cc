@@ -2961,7 +2961,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
   if (!records)
     records++;					/* purecov: inspected */
   scan_time= (double) records / TIME_FOR_COMPARE + 1;
-  read_time= (double) head->file->scan_time() + scan_time + 1.1;
+  read_time= (double) head->file->ha_scan_time() + scan_time + 1.1;
   if (head->force_index)
     scan_time= read_time= DBL_MAX;
   if (limit < records)
@@ -4980,7 +4980,7 @@ double get_sweep_read_cost(const PARAM *param, ha_rows records)
       We are using the primary key to find the rows.
       Calculate the cost for this.
     */
-    result= param->table->file->read_time(param->table->s->primary_key,
+    result= param->table->file->ha_read_time(param->table->s->primary_key,
                                           (uint)records, records);
   }
   else
@@ -5298,7 +5298,7 @@ skip_to_ror_scan:
     {
       /* Ok, we have index_only cost, now get full rows scan cost */
       cost= param->table->file->
-              read_time(param->real_keynr[(*cur_child)->key_idx], 1,
+              ha_read_time(param->real_keynr[(*cur_child)->key_idx], 1,
                         (*cur_child)->records) +
               rows2double((*cur_child)->records) / TIME_FOR_COMPARE;
     }

@@ -2741,9 +2741,10 @@ public:
     table_share= share;
     reset_statistics();
   }
+
+protected:
   virtual double scan_time()
-  { return Cost_factors::get_scan_time_factor() *
-            (ulonglong2double(stats.data_file_length) / IO_SIZE + 2); }
+  { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
 
   /**
      The cost of reading a set of ranges from the table using an index
@@ -2757,7 +2758,14 @@ public:
      using an index by calling it using read_time(index, 1, table_size).
   */
   virtual double read_time(uint index, uint ranges, ha_rows rows)
-  { return Cost_factors::get_read_time_factor() * rows2double(ranges+rows); }
+  { return rows2double(ranges+rows); }
+
+public:
+  double ha_scan_time()
+  { return Cost_factors::scan_factor() * scan_time(); }
+
+  double ha_read_time(uint index, uint ranges, ha_rows rows)
+  { return Cost_factors::read_factor() * read_time(index, ranges, rows); }
 
   /**
     Calculate cost of 'keyread' scan for given index and number of records.
