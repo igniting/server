@@ -530,7 +530,10 @@ inline bool is_system_table_name(const char *name, uint length)
              my_tolower(ci, name[3]) == 'n' &&
              my_tolower(ci, name[4]) == 't')
             )
-           )
+           ) ||
+
+          /* mysql.optimizer_cost_factors */
+          (length == 22)
          );
 }
 

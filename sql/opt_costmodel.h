@@ -5,8 +5,8 @@
 
 namespace Cost_factors
 {
-  static double read_time_factor;
-  static double scan_time_factor;
+  extern double read_time_factor;
+  extern double scan_time_factor;
 
   void init();
   inline double read_factor()
@@ -17,6 +17,6 @@ namespace Cost_factors
   {
     return scan_time_factor;
   }
-};
+}
 
 #endif /* SQL_OPT_COSTMODEL_INCLUDED */

@@ -22,9 +22,14 @@ struct st_factor {
   double *value;
 };
 
-st_factor factors[] = {{"READ_TIME_FACTOR", &Cost_factors::read_time_factor},
-                       {"SCAN_TIME_FACTOR", &Cost_factors::scan_time_factor},
-                       {0, 0}};
+double Cost_factors::read_time_factor= 1;
+double Cost_factors::scan_time_factor= 1;
+
+st_factor factors[] = {
+  {"READ_TIME_FACTOR", &Cost_factors::read_time_factor},
+  {"SCAN_TIME_FACTOR", &Cost_factors::scan_time_factor},
+  {0, 0}
+};
 
 /* Helper functions for Cost_factors::init() */
 
@@ -48,6 +53,8 @@ void Cost_factors::init()
   READ_RECORD read_record_info;
   TABLE *table;
   MEM_ROOT mem;
+  DBUG_ENTER("Cost_factors::init");
+
   init_sql_alloc(&mem, 1024, 0, MYF(0));
   THD *new_thd = new THD;
   
@@ -93,8 +100,12 @@ void Cost_factors::init()
           const_name);
   }
 
+  end_read_record(&read_record_info);
+
 end:
-  close_mysql_tables(new_thd);
+  close_system_tables(new_thd, &open_tables_backup);
   delete new_thd;
+  free_root(&mem, MYF(0));
+  set_current_thd(0);
   DBUG_VOID_RETURN;
 }
