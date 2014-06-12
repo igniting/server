@@ -3,30 +3,18 @@
 #ifndef SQL_OPT_COSTMODEL_INCLUDED
 #define SQL_OPT_COSTMODEL_INCLUDED
 
+class handler;
+
 namespace Cost_factors
 {
-  extern double read_time_factor_val;
-  extern double scan_time_factor_val;
-  extern double time_for_compare_val;
-  extern double time_for_compare_rowid_val;
-
   void init();
-  inline double read_factor()
-  {
-    return read_time_factor_val;
-  }
-  inline double scan_factor()
-  {
-    return scan_time_factor_val;
-  }
-  inline double time_for_compare()
-  {
-    return time_for_compare_val;
-  }
-  inline double time_for_compare_rowid()
-  {
-    return time_for_compare_rowid_val;
-  }
+  /* Engine specific constants */
+  double read_factor(const handler *h);
+  double scan_factor(const handler *h);
+
+  /* Global constants */
+  double time_for_compare();
+  double time_for_compare_rowid();
 }
 
 #endif /* SQL_OPT_COSTMODEL_INCLUDED */
