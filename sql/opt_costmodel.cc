@@ -22,12 +22,16 @@ struct st_factor {
   double *value;
 };
 
-double Cost_factors::read_time_factor= 1;
-double Cost_factors::scan_time_factor= 1;
+double Cost_factors::read_time_factor_val= 1;
+double Cost_factors::scan_time_factor_val= 1;
+double Cost_factors::time_for_compare_val= 5;
+double Cost_factors::time_for_compare_rowid_val= 5*100;
 
 st_factor factors[] = {
-  {"READ_TIME_FACTOR", &Cost_factors::read_time_factor},
-  {"SCAN_TIME_FACTOR", &Cost_factors::scan_time_factor},
+  {"READ_TIME_FACTOR", &Cost_factors::read_time_factor_val},
+  {"SCAN_TIME_FACTOR", &Cost_factors::scan_time_factor_val},
+  {"TIME_FOR_COMPARE", &Cost_factors::time_for_compare_val},
+  {"TIME_FOR_COMPARE_ROWID", &Cost_factors::time_for_compare_rowid_val},
   {0, 0}
 };
 

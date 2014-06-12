@@ -112,7 +112,7 @@ handler::multi_range_read_info_const(uint keyno, RANGE_SEQ_IF *seq,
       cost->io_count= keyread_time(keyno, n_ranges, (uint)total_rows);
     else
       cost->io_count= read_time(keyno, n_ranges, total_rows);
-    cost->cpu_cost= (double) total_rows / TIME_FOR_COMPARE + 0.01;
+    cost->cpu_cost= (double) total_rows / Cost_factors::time_for_compare() + 0.01;
   }
   return total_rows;
 }
@@ -1751,7 +1751,7 @@ void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, Cost_estimate *cost)
   {
     get_sweep_read_cost(table, nrows, FALSE, cost);
     /* Add cost of qsort call: n * log2(n) * cost(rowid_comparison) */
-    double cmp_op= rows2double(nrows) * (1.0 / TIME_FOR_COMPARE_ROWID);
+    double cmp_op= rows2double(nrows) * (1.0 / Cost_factors::time_for_compare_rowid());
     if (cmp_op < 3)
       cmp_op= 3;
     cost->cpu_cost += cmp_op * log2(cmp_op);

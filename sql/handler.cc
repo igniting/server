@@ -2404,7 +2404,7 @@ double handler::keyread_time(uint index, uint ranges, ha_rows rows)
     len= table->s->stored_rec_length;
   double keys_per_block= (stats.block_size/2.0/len+1);
   return (rows + keys_per_block-1)/ keys_per_block +
-         len*rows/(stats.block_size+1)/TIME_FOR_COMPARE ;
+         len*rows/(stats.block_size+1)/Cost_factors::time_for_compare() ;
 }
 
 void **handler::ha_data(THD *thd) const
