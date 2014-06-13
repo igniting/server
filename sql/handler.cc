@@ -619,6 +619,10 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   resolve_sysvar_table_options(hton);
   update_discovery_counters(hton, 1);
 
+  // Re-initialize the cost factors
+  if(mysqld_server_initialized)
+    Cost_factors::re_init(current_thd);
+
   DBUG_RETURN(0);
 
 err_deinit:

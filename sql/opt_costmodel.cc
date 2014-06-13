@@ -32,7 +32,17 @@ namespace Cost_factors
 
   Engine_cost_factors engine[MAX_HA];
 
-  double time_for_compare_val= 5;
+  /**
+    The following is used to decide if MySQL should use table scanning
+    instead of reading with keys.  The number says how many evaluation of the
+    WHERE clause is comparable to reading one extra row from a table.
+  */
+  double time_for_compare_val= 5;     // 5 compares == one read
+
+  /**
+    Number of comparisons of table rowids equivalent to reading one row from a
+    table.
+  */
   double time_for_compare_rowid_val= 500;
 
   /* Helper structure for assigning the value to appropriate variable by name */
@@ -98,19 +108,12 @@ namespace Cost_factors
 
   void init()
   {
-    TABLE_LIST table_list;
-    Open_tables_backup open_tables_backup;
-    READ_RECORD read_record_info;
-    TABLE *table;
-    MEM_ROOT mem;
     DBUG_ENTER("Cost_factors::init");
 
-    init_sql_alloc(&mem, 1024, 0, MYF(0));
     THD *new_thd = new THD;
 
     if(!new_thd)
     {
-      free_root(&mem, MYF(0));
       DBUG_VOID_RETURN;
     }
 
@@ -118,13 +121,31 @@ namespace Cost_factors
     new_thd->store_globals();
     new_thd->set_db(db_name.str, db_name.length);
 
-    if(open_table(new_thd, &table_list, &open_tables_backup, FALSE))
+    re_init(new_thd);
+
+    delete new_thd;
+    set_current_thd(0);
+    DBUG_VOID_RETURN;
+  }
+
+  void re_init(THD *thd)
+  {
+    TABLE_LIST table_list;
+    Open_tables_backup open_tables_backup;
+    READ_RECORD read_record_info;
+    TABLE *table;
+    MEM_ROOT mem;
+
+    DBUG_ENTER("Cost_factors::re_init");
+
+    init_sql_alloc(&mem, 1024, 0, MYF(0));
+
+    if(open_table(thd, &table_list, &open_tables_backup, FALSE))
     {
       goto end;
     }
-
     table= table_list.table;
-    if(init_read_record(&read_record_info, new_thd, table, NULL, 1, 0, FALSE))
+    if(init_read_record(&read_record_info, thd, table, NULL, 1, 0, FALSE))
     {
       goto end;
     }
@@ -135,16 +156,18 @@ namespace Cost_factors
       char *const_name= get_field(&mem, table->field[COST_FACTORS_CONST_NAME]);
       LEX_STRING engine_name;
       engine_name.str= get_field(&mem, table->field[COST_FACTORS_ENGINE_NAME]);
-      engine_name.length= strlen(engine_name.str);
       double const_value;
       const_value= table->field[COST_FACTORS_CONST_VALUE]->val_real();
-      if(strcasecmp(engine_name.str, "GLOBAL") == 0)
+
+      // Engine name is null for global cost factors
+      if(!engine_name.str)
       {
         assign_factor_value(const_name, const_value, global_factors);
       }
       else
       {
-        plugin_ref engine_plugin= ha_resolve_by_name(new_thd, &engine_name);
+        engine_name.length= strlen(engine_name.str);
+        plugin_ref engine_plugin= ha_resolve_by_name(thd, &engine_name);
         if(engine_plugin != NULL)
         {
           uint slot= plugin_data(engine_plugin, handlerton *)->slot;
@@ -156,10 +179,8 @@ namespace Cost_factors
     end_read_record(&read_record_info);
 
   end:
-    close_system_tables(new_thd, &open_tables_backup);
-    delete new_thd;
+    close_system_tables(thd, &open_tables_backup);
     free_root(&mem, MYF(0));
-    set_current_thd(0);
     DBUG_VOID_RETURN;
   }
 

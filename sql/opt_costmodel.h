@@ -8,6 +8,7 @@ class handler;
 namespace Cost_factors
 {
   void init();
+  void re_init(THD *thd);
   /* Engine specific constants */
   double read_factor(const handler *h);
   double scan_factor(const handler *h);
