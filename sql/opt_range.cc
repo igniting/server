@@ -2960,7 +2960,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
   records= head->stat_records();
   if (!records)
     records++;					/* purecov: inspected */
-  scan_time= (double) records / Cost_factors::time_for_compare() + 1;
+  scan_time= (double) records / cost_factors.time_for_compare() + 1;
   read_time= (double) head->file->ha_scan_time() + scan_time + 1.1;
   if (head->force_index)
     scan_time= read_time= DBL_MAX;
@@ -3060,7 +3060,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     {
       int key_for_use= find_shortest_key(head, &head->covering_keys);
       double key_read_time= head->file->keyread_time(key_for_use, 1, records) +
-                            (double) records / Cost_factors::time_for_compare();
+                            (double) records / cost_factors.time_for_compare();
       DBUG_PRINT("info",  ("'all'+'using index' scan will be using key %d, "
                            "read time %g", key_for_use, key_read_time));
       if (key_read_time < read_time)
@@ -5208,7 +5208,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
       Add one ROWID comparison for each row retrieved on non-CPK scan.  (it
       is done in QUICK_RANGE_SELECT::row_in_ranges)
      */
-    imerge_cost += non_cpk_scan_records / Cost_factors::time_for_compare_rowid();
+    imerge_cost += non_cpk_scan_records / cost_factors.time_for_compare_rowid();
   }
 
   /* Calculate cost(rowid_to_row_scan) */
@@ -5238,7 +5238,7 @@ TABLE_READ_PLAN *get_best_disjunct_quick(PARAM *param, SEL_IMERGE *imerge,
     Unique::get_use_cost(param->imerge_cost_buff, (uint)non_cpk_scan_records,
                          param->table->file->ref_length,
                          param->thd->variables.sortbuff_size,
-                         Cost_factors::time_for_compare_rowid(),
+                         cost_factors.time_for_compare_rowid(),
                          FALSE, NULL);
   DBUG_PRINT("info",("index_merge total cost: %g (wanted: less then %g)",
                      imerge_cost, read_time));
@@ -5300,7 +5300,7 @@ skip_to_ror_scan:
       cost= param->table->file->
               ha_read_time(param->real_keynr[(*cur_child)->key_idx], 1,
                         (*cur_child)->records) +
-              rows2double((*cur_child)->records) / Cost_factors::time_for_compare();
+              rows2double((*cur_child)->records) / cost_factors.time_for_compare();
     }
     else
       cost= read_time;
@@ -5343,7 +5343,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   roru_total_cost= roru_index_costs +
                    rows2double(roru_total_records)*log((double)n_child_scans) /
-                   (Cost_factors::time_for_compare_rowid() * M_LN2) +
+                   (cost_factors.time_for_compare_rowid() * M_LN2) +
                    get_sweep_read_cost(param, roru_total_records);
 
   DBUG_PRINT("info", ("ROR-union: cost %g, %d members", roru_total_cost,
@@ -5683,7 +5683,7 @@ bool prepare_search_best_index_intersect(PARAM *param,
 
   common->param= param;
   common->key_size= table->file->ref_length;
-  common->compare_factor= Cost_factors::time_for_compare_rowid();
+  common->compare_factor= cost_factors.time_for_compare_rowid();
   common->max_memory_size= param->thd->variables.sortbuff_size;
   common->cutoff_cost= cutoff_cost;
   common->cpk_scan= NULL;
@@ -6762,7 +6762,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
       per check this gives us:
     */
     info->index_scan_costs += rows2double(info->index_records) / 
-                              Cost_factors::time_for_compare_rowid();
+                              cost_factors.time_for_compare_rowid();
   }
   else
   {
@@ -7147,7 +7147,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   /* Add priority queue use cost. */
   total_cost += rows2double(records)*
                 log((double)(ror_scan_mark - tree->ror_scans)) /
-                (Cost_factors::time_for_compare_rowid() * M_LN2);
+                (cost_factors.time_for_compare_rowid() * M_LN2);
   DBUG_PRINT("info", ("Covering ROR-intersect full cost: %g", total_cost));
 
   if (total_cost > read_time)
@@ -13547,10 +13547,10 @@ void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
   const double tree_traversal_cost= 
     ceil(log(static_cast<double>(table_records))/
          log(static_cast<double>(keys_per_block))) * 
-    1/(2*Cost_factors::time_for_compare()); 
+    1/(2*cost_factors.time_for_compare()); 
 
   const double cpu_cost= num_groups *
-                         (tree_traversal_cost + 1/Cost_factors::time_for_compare());
+                         (tree_traversal_cost + 1/cost_factors.time_for_compare());
 
   *read_cost= io_cost + cpu_cost;
   *records= num_groups;

@@ -621,7 +621,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
 
   // Re-initialize the cost factors
   if(mysqld_server_initialized)
-    Cost_factors::re_init(current_thd);
+    cost_factors.re_init(current_thd);
 
   DBUG_RETURN(0);
 
@@ -2408,7 +2408,7 @@ double handler::keyread_time(uint index, uint ranges, ha_rows rows)
     len= table->s->stored_rec_length;
   double keys_per_block= (stats.block_size/2.0/len+1);
   return (rows + keys_per_block-1)/ keys_per_block +
-         len*rows/(stats.block_size+1)/Cost_factors::time_for_compare() ;
+         len*rows/(stats.block_size+1)/cost_factors.time_for_compare() ;
 }
 
 void **handler::ha_data(THD *thd) const

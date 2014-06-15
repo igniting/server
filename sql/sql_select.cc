@@ -6064,9 +6064,9 @@ best_access_path(JOIN      *join,
         tmp += s->startup_cost;
         loose_scan_opt.check_ref_access_part2(key, start_key, records, tmp);
       } /* not ft_key */
-      if (tmp + 0.0001 < best_time - records/Cost_factors::time_for_compare())
+      if (tmp + 0.0001 < best_time - records/cost_factors.time_for_compare())
       {
-        best_time= tmp + records/Cost_factors::time_for_compare();
+        best_time= tmp + records/cost_factors.time_for_compare();
         best= tmp;
         best_records= records;
         best_key= start_key;
@@ -6100,14 +6100,14 @@ best_access_path(JOIN      *join,
                                                      use_cond_selectivity);
 
     tmp= s->quick ? s->quick->read_time : s->scan_time();
-    tmp+= (s->records - rnd_records)/Cost_factors::time_for_compare();
+    tmp+= (s->records - rnd_records)/cost_factors.time_for_compare();
 
     /* We read the table as many times as join buffer becomes full. */
     tmp*= (1.0 + floor((double) cache_record_length(join,idx) *
                           record_count /
                           (double) thd->variables.join_buff_size));
     best_time= tmp + 
-               (record_count*join_sel) / Cost_factors::time_for_compare() * rnd_records;
+               (record_count*join_sel) / cost_factors.time_for_compare() * rnd_records;
     best= tmp;
     records= rnd_records;
     best_key= hj_start_key;
@@ -6178,7 +6178,7 @@ best_access_path(JOIN      *join,
       */
       tmp= record_count *
         (s->quick->read_time +
-         (s->found_records - rnd_records)/Cost_factors::time_for_compare());
+         (s->found_records - rnd_records)/cost_factors.time_for_compare());
 
       loose_scan_opt.check_range_access(join, idx, s->quick);
     }
@@ -6199,7 +6199,7 @@ best_access_path(JOIN      *join,
         */
         tmp= record_count *
           (tmp +
-           (s->records - rnd_records)/Cost_factors::time_for_compare());
+           (s->records - rnd_records)/cost_factors.time_for_compare());
       }
       else
       {
@@ -6214,7 +6214,7 @@ best_access_path(JOIN      *join,
            we read the table (see flush_cached_records for details). Here we
            take into account cost to read and skip these records.
         */
-        tmp+= (s->records - rnd_records)/Cost_factors::time_for_compare();
+        tmp+= (s->records - rnd_records)/cost_factors.time_for_compare();
       }
     }
 
@@ -6225,9 +6225,9 @@ best_access_path(JOIN      *join,
       tmp give us total cost of using TABLE SCAN
     */
     if (best == DBL_MAX ||
-        (tmp  + record_count/Cost_factors::time_for_compare()*rnd_records <
+        (tmp  + record_count/cost_factors.time_for_compare()*rnd_records <
          (best_key->is_for_hash_join() ? best_time :
-          best + record_count/Cost_factors::time_for_compare()*records)))
+          best + record_count/cost_factors.time_for_compare()*records)))
     {
       /*
         If the table has a range (s->quick is set) make_join_select()
@@ -6759,7 +6759,7 @@ optimize_straight_join(JOIN *join, table_map join_tables)
     /* compute the cost of the new plan extended with 's' */
     record_count*= join->positions[idx].records_read;
     read_time+= join->positions[idx].read_time +
-                record_count / Cost_factors::time_for_compare();
+                record_count / cost_factors.time_for_compare();
     advance_sj_state(join, join_tables, idx, &record_count, &read_time,
                      &loose_scan_pos);
 
@@ -6951,7 +6951,7 @@ greedy_search(JOIN      *join,
     /* compute the cost of the new plan extended with 'best_table' */
     record_count*= join->positions[idx].records_read;
     read_time+= join->positions[idx].read_time + 
-                record_count / Cost_factors::time_for_compare();
+                record_count / cost_factors.time_for_compare();
 
     remaining_tables&= ~(best_table->table->map);
     --size_remain;
@@ -7059,7 +7059,7 @@ void JOIN::get_partial_cost_and_fanout(int end_tab_idx,
     if (tab->records_read && (cur_table_map & filter_map))
     {
       record_count *= tab->records_read;
-      read_time += tab->read_time + record_count / Cost_factors::time_for_compare();
+      read_time += tab->read_time + record_count / cost_factors.time_for_compare();
       if (tab->emb_sj_nest)
         sj_inner_fanout *= tab->records_read;
     }
@@ -7647,7 +7647,7 @@ best_extension_by_limited_search(JOIN      *join,
 
       current_record_count= record_count * position->records_read;
       current_read_time=read_time + position->read_time +
-                        current_record_count / Cost_factors::time_for_compare();
+                        current_record_count / cost_factors.time_for_compare();
 
       advance_sj_state(join, remaining_tables, idx, &current_record_count,
                        &current_read_time, &loose_scan_pos);
@@ -7778,7 +7778,7 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
     DBUG_PRINT("best",("read_time: %g  record_count: %g",read_time,
 		       record_count));
 
-    read_time+=record_count/Cost_factors::time_for_compare();
+    read_time+=record_count/cost_factors.time_for_compare();
     if (join->sort_by_table &&
 	join->sort_by_table !=
 	join->positions[join->const_tables].table->table)
@@ -7791,7 +7791,7 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
     }
     DBUG_RETURN(FALSE);
   }
-  if (read_time+record_count/Cost_factors::time_for_compare() >= join->best_read)
+  if (read_time+record_count/cost_factors.time_for_compare() >= join->best_read)
     DBUG_RETURN(FALSE);					/* Found better before */
 
   JOIN_TAB *s;

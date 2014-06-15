@@ -5413,7 +5413,7 @@ int mysqld_main(int argc, char **argv)
 #endif
   }
 
-  Cost_factors::init();
+  cost_factors.init();
 
   init_status_vars();
   if (opt_bootstrap) /* If running with bootstrap, do not start replication. */

@@ -1370,7 +1370,7 @@ bool check_if_pq_applicable(Sort_param *param,
       */
       const double pq_cpu_cost= 
         (PQ_slowness * num_rows + param->max_keys_per_buffer) *
-        log((double) param->max_keys_per_buffer) / Cost_factors::time_for_compare_rowid();
+        log((double) param->max_keys_per_buffer) / cost_factors.time_for_compare_rowid();
       const double pq_io_cost=
         param->max_rows * table->file->ha_scan_time() / 2.0;
       const double pq_cost= pq_cpu_cost + pq_io_cost;

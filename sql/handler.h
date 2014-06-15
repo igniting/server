@@ -2762,10 +2762,10 @@ protected:
 
 public:
   double ha_scan_time()
-  { return Cost_factors::scan_factor(this) * scan_time(); }
+  { return cost_factors.scan_factor(this) * scan_time(); }
 
   double ha_read_time(uint index, uint ranges, ha_rows rows)
-  { return Cost_factors::read_factor(this) * read_time(index, ranges, rows); }
+  { return cost_factors.read_factor(this) * read_time(index, ranges, rows); }
 
   /**
     Calculate cost of 'keyread' scan for given index and number of records.

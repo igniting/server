@@ -3049,7 +3049,7 @@ bool Duplicate_weedout_picker::check_qep(JOIN *join,
     {
       POSITION *p= join->positions + j;
       current_fanout *= p->records_read;
-      dups_cost += p->read_time + current_fanout / Cost_factors::time_for_compare();
+      dups_cost += p->read_time + current_fanout / cost_factors.time_for_compare();
       if (p->table->emb_sj_nest)
       {
         sj_inner_fanout *= p->records_read;

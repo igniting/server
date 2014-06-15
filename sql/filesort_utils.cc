@@ -29,7 +29,7 @@ double get_merge_cost(ha_rows num_elements, ha_rows num_buffers, uint elem_size)
   return 
     2.0 * ((double) num_elements * elem_size) / IO_SIZE
     + (double) num_elements * log((double) num_buffers) /
-      (Cost_factors::time_for_compare_rowid() * M_LN2);
+      (cost_factors.time_for_compare_rowid() * M_LN2);
 }
 }
 
@@ -52,7 +52,7 @@ double get_merge_many_buffs_cost_fast(ha_rows num_rows,
   total_cost=
     ( num_buffers * num_keys_per_buffer * log(1.0 + num_keys_per_buffer) +
       last_n_elems * log(1.0 + last_n_elems) )
-    / Cost_factors::time_for_compare_rowid();
+    / cost_factors.time_for_compare_rowid();
   
   // Simulate behavior of merge_many_buff().
   while (num_buffers >= MERGEBUFF2)
