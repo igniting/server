@@ -3729,6 +3729,14 @@ public:
     return (temporary_tables ||
             (rgi_slave && rgi_have_temporary_tables()));
   }
+public:
+  Cost_factors thd_cost_factors;
+  measurement data[TOTAL_CONSTANTS];
+private:
+  uint equation_no;
+public:
+  void build_equation();
+  void solve_equations();
 };
 
 

@@ -895,7 +895,8 @@ THD::THD()
 #endif /* defined(ENABLED_DEBUG_SYNC) */
    wait_for_commit_ptr(0),
     main_da(0, false, false),
-   m_stmt_da(&main_da)
+   m_stmt_da(&main_da),
+   thd_cost_factors(cost_factors)
 {
   ulong tmp;
 

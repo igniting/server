@@ -5,6 +5,8 @@
 
 class handler;
 
+#define TOTAL_CONSTANTS 4
+
 class Cost_factor
 {
 public:
@@ -80,5 +82,19 @@ public:
 };
 
 extern Cost_factors cost_factors;
+
+/* 
+   Structure to store coefficients of system of linear equations containing
+   all constants and the total time
+*/
+struct measurement {
+  ulong time_for_compare;
+  ulong time_for_compare_rowid;
+  struct per_engine {
+    ulong scan_time;
+    ulong read_time;
+  } per_engine[64];
+  double total_time;
+};
 
 #endif /* SQL_OPT_COSTMODEL_INCLUDED */
