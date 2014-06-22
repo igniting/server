@@ -1759,6 +1759,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 #if defined(ENABLED_PROFILING)
   thd->profiling.finish_current_query();
 #endif
+  thd->build_equation();
   if (MYSQL_QUERY_DONE_ENABLED() || MYSQL_COMMAND_DONE_ENABLED())
   {
     int res __attribute__((unused));

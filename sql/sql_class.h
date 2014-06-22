@@ -3731,10 +3731,9 @@ public:
   }
 public:
   Cost_factors thd_cost_factors;
-  measurement data[TOTAL_CONSTANTS];
-private:
+  measurement measurement_data[MAX_EQUATIONS];
   uint equation_no;
-public:
+  ulonglong utime_before_query;
   void build_equation();
   void solve_equations();
 };

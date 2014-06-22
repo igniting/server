@@ -896,7 +896,8 @@ THD::THD()
    wait_for_commit_ptr(0),
     main_da(0, false, false),
    m_stmt_da(&main_da),
-   thd_cost_factors(cost_factors)
+   thd_cost_factors(cost_factors),
+   equation_no(0)
 {
   ulong tmp;
 
@@ -6428,3 +6429,21 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
 }
 
 #endif /* !defined(MYSQL_CLIENT) */
+
+void THD::build_equation()
+{
+  /* Update data in measurement_data[equation_no] */
+  measurement_data[equation_no].total_time=
+    utime_after_query - utime_before_query;
+  equation_no++;
+  if(equation_no == MAX_EQUATIONS)
+  {
+    solve_equations();
+    equation_no= 0;
+  }
+}
+
+void THD::solve_equations()
+{
+  // TODO: Update the values in thd_cost_factors
+}
