@@ -1353,6 +1353,8 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
         MYSQL_QUERY_DONE(thd->is_error());
       }
 
+      thd->build_equation();
+
 #if defined(ENABLED_PROFILING)
       thd->profiling.finish_current_query();
       thd->profiling.start_new_query("continuing");
