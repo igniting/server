@@ -59,7 +59,8 @@ void Global_cost_factors::set_global_factor(const char *name, double value)
 {
   st_factor all_names[] = {
     {"TIME_FOR_COMPARE", &time_for_compare.value},
-    {"TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid.value}
+    {"TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid.value},
+    {0, 0}
   };
   assign_factor_value(name, value, all_names);
 }
@@ -68,7 +69,8 @@ void Engine_cost_factors::set_engine_factor(const char *name, double value)
 {
   st_factor all_names[] = {
     {"READ_TIME_FACTOR", &read_time.value},
-    {"SCAN_TIME_FACTOR", &scan_time.value}
+    {"SCAN_TIME_FACTOR", &scan_time.value},
+    {0, 0}
   };
   assign_factor_value(name, value, all_names);
 }
