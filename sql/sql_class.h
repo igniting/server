@@ -3734,6 +3734,14 @@ public:
   measurement measurement_data[MAX_EQUATIONS];
   uint equation_no;
   ulonglong utime_before_query;
+  inline void inc_read_time(const handler *h)
+  {
+    measurement_data[equation_no].per_engine[h->ht->slot].read_time++;
+  }
+  inline void inc_scan_time(const handler *h)
+  {
+    measurement_data[equation_no].per_engine[h->ht->slot].scan_time++;
+  }
   void build_equation();
   void solve_equations();
 };
