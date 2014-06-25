@@ -5403,8 +5403,8 @@ extern "C" int cmp_key_rowid_part_id(void *ptr, uchar *ref1, uchar *ref2)
   {
     return res;
   }
-  if ((res= file->m_file[0]->cmp_ref(ref1 + PARTITION_BYTES_IN_POS + file->m_rec_length,
-                                     ref2 + PARTITION_BYTES_IN_POS + file->m_rec_length)))
+  if ((res= file->m_file[0]->ha_cmp_ref(ref1 + PARTITION_BYTES_IN_POS + file->m_rec_length,
+                                        ref2 + PARTITION_BYTES_IN_POS + file->m_rec_length)))
   {
     return res;
   }

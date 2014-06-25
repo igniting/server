@@ -3769,7 +3769,7 @@ int subselect_uniquesubquery_engine::scan_table()
       }
     }
 
-    if (!cond || cond->val_int())
+    if (top_level_cond_is_satisfied(cond, table->in_use))
     {
       empty_result_set= FALSE;
       break;
@@ -3899,7 +3899,7 @@ int subselect_uniquesubquery_engine::exec()
   {
     error= 0;
     table->null_row= 0;
-    if (!table->status && (!cond || cond->val_int()))
+    if (!table->status && top_level_cond_is_satisfied(cond, table->in_use))
     {
       ((Item_in_subselect *) item)->value= 1;
       empty_result_set= FALSE;
@@ -3942,7 +3942,7 @@ int subselect_uniquesubquery_engine::index_lookup()
   }
 
   table->null_row= 0;
-  if (!error && (!cond || cond->val_int()))
+  if (!error && (top_level_cond_is_satisfied(cond, table->in_use)))
     ((Item_in_subselect *) item)->value= 1;
   else
     ((Item_in_subselect *) item)->value= 0;
@@ -4073,7 +4073,8 @@ int subselect_indexsubquery_engine::exec()
       table->null_row= 0;
       if (!table->status)
       {
-        if ((!cond || cond->val_int()) && (!having || having->val_int()))
+        if (top_level_cond_is_satisfied(cond, table->in_use) &&
+            top_level_cond_is_satisfied(having, table->in_use))
         {
           empty_result_set= FALSE;
           if (null_finding)
@@ -6505,7 +6506,7 @@ bool subselect_table_scan_engine::partial_match()
     {
       DBUG_ASSERT(cur_eq->type() == Item::FUNC_ITEM &&
                   ((Item_func*)cur_eq)->functype() == Item_func::EQ_FUNC);
-      if (!cur_eq->val_int() && !cur_eq->null_value)
+      if (!top_level_cond_is_satisfied(cur_eq, current_thd) && !cur_eq->null_value)
         break;
       ++count_matches;
     }

@@ -2283,7 +2283,7 @@ C_MODE_START
 static int QUICK_ROR_UNION_SELECT_queue_cmp(void *arg, uchar *val1, uchar *val2)
 {
   QUICK_ROR_UNION_SELECT *self= (QUICK_ROR_UNION_SELECT*)arg;
-  return self->head->file->cmp_ref(((QUICK_SELECT_I*)val1)->last_rowid,
+  return self->head->file->ha_cmp_ref(((QUICK_SELECT_I*)val1)->last_rowid,
                                    ((QUICK_SELECT_I*)val2)->last_rowid);
 }
 
@@ -10647,7 +10647,7 @@ ha_rows check_quick_select(PARAM *param, uint idx, bool index_only,
 
   NOTES
     ROR (Rowid Ordered Retrieval) key scan is a key scan that produces
-    ordered sequence of rowids (ha_xxx::cmp_ref is the comparison function)
+    ordered sequence of rowids (ha_xxx::ha_cmp_ref is the comparison function)
 
     This function is needed to handle a practically-important special case:
     an index scan is a ROR scan if it is done using a condition in form
@@ -11426,7 +11426,7 @@ int QUICK_ROR_INTERSECT_SELECT::get_next()
           DBUG_RETURN(error);
         }
         quick->file->position(quick->record);
-        cmp= head->file->cmp_ref(quick->file->ref, last_rowid);
+        cmp= head->file->ha_cmp_ref(quick->file->ref, last_rowid);
         if (cmp < 0)
         {
           /* This row is being skipped.  Release lock on it. */
@@ -11548,7 +11548,7 @@ int QUICK_ROR_UNION_SELECT::get_next()
         have_prev_rowid= TRUE;
       }
       else
-        dup_row= !head->file->cmp_ref(cur_rowid, prev_rowid);
+        dup_row= !head->file->ha_cmp_ref(cur_rowid, prev_rowid);
     } while (dup_row);
 
     tmp= cur_rowid;

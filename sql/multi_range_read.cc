@@ -566,7 +566,7 @@ int Mrr_ordered_index_reader::init(handler *h_arg, RANGE_SEQ_IF *seq_funcs,
 
 static int rowid_cmp_reverse(void *file, uchar *a, uchar *b)
 {
-  return - ((handler*)file)->cmp_ref(a, b);
+  return - ((handler*)file)->ha_cmp_ref(a, b);
 }
 
 
@@ -769,7 +769,7 @@ int Mrr_ordered_rndpos_reader::get_next(range_id_t *range_info)
   it.init(rowid_buffer);
   while (!it.read())
   {
-    if (file->cmp_ref(it.read_ptr1, rowid_buffer->read_ptr1))
+    if (file->ha_cmp_ref(it.read_ptr1, rowid_buffer->read_ptr1))
       break;
     last_identical_rowid= it.read_ptr1;
   }

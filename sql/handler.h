@@ -3341,10 +3341,13 @@ public:
    @retval FALSE  No.
  */
  virtual bool primary_key_is_clustered() { return FALSE; }
+protected:
  virtual int cmp_ref(const uchar *ref1, const uchar *ref2)
  {
    return memcmp(ref1, ref2, ref_length);
  }
+public:
+ int ha_cmp_ref(const uchar *ref1, const uchar *ref2);
 
  /*
    Condition pushdown to storage engines

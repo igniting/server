@@ -3735,13 +3735,9 @@ private:
   ulonglong total_time;
 public:
   ulonglong utime_before_query;
-  inline void inc_read_time(const handler *h)
+  inline void inc_coefficient(uint factor, int engine_index= -1)
   {
-    coefficients[get_factor_index(READ_TIME, h->ht->slot)].value++;
-  }
-  inline void inc_scan_time(const handler *h)
-  {
-    coefficients[get_factor_index(SCAN_TIME, h->ht->slot)].value++;
+    coefficients[get_factor_index(factor, engine_index)].value++;
   }
   void build_equation();
   void solve_equation();

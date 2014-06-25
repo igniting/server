@@ -1486,7 +1486,7 @@ uint JOIN_CACHE::write_record_data(uchar * link, bool *is_full)
   { 
     join_tab->found= 0;
     join_tab->not_null_compl= 1;
-    if (!join_tab->on_precond->val_int())
+    if (!top_level_cond_is_satisfied(join_tab->on_precond, current_thd))
     {
       flags_pos[0]= MATCH_IMPOSSIBLE;     
       last_written_is_null_compl= 1;
@@ -4385,7 +4385,7 @@ bool JOIN_CACHE_BKA::skip_index_tuple(range_id_t range_info)
 {
 DBUG_ENTER("JOIN_CACHE_BKA::skip_index_tuple");
 get_record_by_pos((uchar*)range_info);
-DBUG_RETURN(!join_tab->cache_idx_cond->val_int());
+DBUG_RETURN(!top_level_cond_is_satisfied(join_tab->cache_idx_cond, current_thd));
 }
 
 
@@ -4649,7 +4649,7 @@ bool JOIN_CACHE_BKAH::skip_index_tuple(range_id_t range_info)
     next_rec_ref_ptr= get_next_rec_ref(next_rec_ref_ptr);
     uchar *rec_ptr= next_rec_ref_ptr + rec_fields_offset;
     get_record_by_pos(rec_ptr);
-    if (join_tab->cache_idx_cond->val_int())
+    if (top_level_cond_is_satisfied(join_tab->cache_idx_cond, current_thd))
       DBUG_RETURN(FALSE);
   } while(next_rec_ref_ptr != last_rec_ref_ptr);
   DBUG_RETURN(TRUE);

@@ -33,6 +33,8 @@ C_MODE_START
 #include <ma_dyncol.h>
 C_MODE_END
 
+bool top_level_cond_is_satisfied(COND *cond, THD *thd);
+
 static inline
 bool trace_unsupported_func(const char *where, const char *processor_name)
 {

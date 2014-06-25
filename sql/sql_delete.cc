@@ -757,7 +757,7 @@ exit_without_my_ok:
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 {
   handler *file= (handler*)arg;
-  return file->cmp_ref((const uchar*)a, (const uchar*)b);
+  return file->ha_cmp_ref((const uchar*)a, (const uchar*)b);
 }
 
 /*

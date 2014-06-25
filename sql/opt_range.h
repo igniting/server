@@ -1004,7 +1004,7 @@ class SQL_SELECT :public Sql_alloc {
   */   
   inline int skip_record(THD *thd)
   {
-    int rc= MY_TEST(!cond || cond->val_int());
+    int rc= top_level_cond_is_satisfied(cond, thd);
     if (thd->is_error())
       rc= -1;
     return rc;
