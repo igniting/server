@@ -5,7 +5,20 @@
 
 class handler;
 
-#define MAX_EQUATIONS 30
+#define MAX_CONSTANTS 130
+#define MAX_GLOBAL_CONSTANTS 2
+#define TIME_FOR_COMPARE 0
+#define TIME_FOR_COMPARE_ROWID 1
+#define MAX_ENGINE_CONSTANTS 2
+#define READ_TIME 0
+#define SCAN_TIME 1
+
+inline uint get_factor_index(uint offset, int engine_index=-1)
+{
+  if(engine_index == -1)
+    return offset;
+  return MAX_GLOBAL_CONSTANTS + engine_index*MAX_ENGINE_CONSTANTS + offset;
+}
 
 class Cost_factor
 {
@@ -83,31 +96,13 @@ public:
 
 extern Cost_factors cost_factors;
 
-/*
-   Structure to store coefficients of system of linear equations containing
-   all constants and the total time
-*/
-struct measurement
+/* Structure to store coefficients of system of linear equations */
+struct eq_coefficient
 {
-  ulonglong time_for_compare;
-  ulonglong time_for_compare_rowid;
-  struct per_engine
+  ulonglong value;
+  eq_coefficient()
   {
-    ulonglong scan_time;
-    ulonglong read_time;
-    per_engine()
-    {
-      scan_time= 0;
-      read_time= 0;
-    }
-  } per_engine[64];
-  ulonglong total_time;
-
-  measurement()
-  {
-    time_for_compare= 0;
-    time_for_compare_rowid= 0;
-    total_time= 0;
+    value= 0;
   }
 };
 

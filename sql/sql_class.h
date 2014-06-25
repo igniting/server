@@ -3729,21 +3729,22 @@ public:
     return (temporary_tables ||
             (rgi_slave && rgi_have_temporary_tables()));
   }
-public:
+private:
   Cost_factors thd_cost_factors;
-  measurement measurement_data[MAX_EQUATIONS];
-  uint equation_no;
+  eq_coefficient coefficients[MAX_CONSTANTS];
+  ulonglong total_time;
+public:
   ulonglong utime_before_query;
   inline void inc_read_time(const handler *h)
   {
-    measurement_data[equation_no].per_engine[h->ht->slot].read_time++;
+    coefficients[get_factor_index(READ_TIME, h->ht->slot)].value++;
   }
   inline void inc_scan_time(const handler *h)
   {
-    measurement_data[equation_no].per_engine[h->ht->slot].scan_time++;
+    coefficients[get_factor_index(SCAN_TIME, h->ht->slot)].value++;
   }
   void build_equation();
-  void solve_equations();
+  void solve_equation();
 };
 
 

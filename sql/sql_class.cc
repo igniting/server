@@ -66,6 +66,8 @@
 #include "lock.h"
 #include "sql_connect.h"
 
+#include <fstream>
+
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -897,7 +899,7 @@ THD::THD()
     main_da(0, false, false),
    m_stmt_da(&main_da),
    thd_cost_factors(cost_factors),
-   equation_no(0)
+   total_time(0)
 {
   ulong tmp;
 
@@ -6432,18 +6434,19 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
 
 void THD::build_equation()
 {
-  /* Update data in measurement_data[equation_no] */
-  measurement_data[equation_no].total_time=
-    utime_after_query - utime_before_query;
-  equation_no++;
-  if(equation_no == MAX_EQUATIONS)
-  {
-    solve_equations();
-    equation_no= 0;
-  }
+  total_time= utime_after_query - utime_before_query;
+  solve_equation();
 }
 
-void THD::solve_equations()
+void THD::solve_equation()
 {
-  // TODO: Update the values in thd_cost_factors
+  /*
+     Currently just dump all the coefficients to a file
+  */
+  std::ofstream datafile;
+  datafile.open("/tmp/mariadb_cost_coefficients.txt", std::ios::app);
+  for(int i=0; i < MAX_CONSTANTS; i++)
+    datafile << coefficients[i].value << " ";
+  datafile << total_time << "\n";
+  datafile.close();
 }

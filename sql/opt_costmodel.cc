@@ -17,7 +17,6 @@ enum cost_factors_col
   COST_FACTORS_CONST_VALUE
 };
 
-
 /* Helper functions for Cost_factors::init() */
 inline int open_table(THD *thd, TABLE_LIST *table,
                       Open_tables_backup *backup,
