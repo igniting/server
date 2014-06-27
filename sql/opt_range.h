@@ -38,6 +38,12 @@
 class JOIN;
 class Item_sum;
 
+static inline bool top_level_cond_is_satisfied(COND *cond, THD *thd)
+{
+  thd->inc_coefficient(TIME_FOR_COMPARE);
+  return !cond || cond->val_int();
+}
+
 typedef struct st_key_part {
   uint16           key,part;
   /* See KEY_PART_INFO for meaning of the next two: */

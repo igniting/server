@@ -43,12 +43,6 @@
                                        // RESOLVED_AGAINST_ALIAS, ...
 #include "sql_expression_cache.h"
 
-bool top_level_cond_is_satisfied(COND *cond, THD *thd)
-{
-  thd->inc_coefficient(TIME_FOR_COMPARE);
-  return !cond || cond->val_int();
-}
-
 const String my_null_string("NULL", 4, default_charset_info);
 
 static int save_field_in_field(Field *from, bool *null_value,

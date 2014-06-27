@@ -6444,7 +6444,9 @@ void THD::solve_equation()
      Currently just dump all the coefficients to a file
   */
   std::ofstream datafile;
-  datafile.open("/tmp/mariadb_cost_coefficients.txt", std::ios::app);
+  char file_name[100];
+  my_snprintf(file_name, 100, "/tmp/mariadb_cost_coefficients_%lu.txt", thread_id);
+  datafile.open(file_name, std::ios::app);
   for(int i=0; i < MAX_CONSTANTS; i++)
     datafile << coefficients[i].value << " ";
   datafile << total_time << "\n";

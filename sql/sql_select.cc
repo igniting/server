@@ -2444,8 +2444,8 @@ void JOIN::exec_inner()
       DBUG_ASSERT(error == 0);
       if (cond_value != Item::COND_FALSE &&
           having_value != Item::COND_FALSE &&
-          top_level_cond_is_satisfied(conds, current_thd) &&
-          top_level_cond_is_satisfied(having, current_thd))
+          top_level_cond_is_satisfied(conds, thd) &&
+          top_level_cond_is_satisfied(having, thd))
       {
 	if (do_send_rows &&
             (procedure ? (procedure->send_row(procedure_fields_list) ||
@@ -2483,7 +2483,7 @@ void JOIN::exec_inner()
     might not have produced a complete executable plan for EXPLAINs.
   */
   if (!(select_options & SELECT_DESCRIBE) &&
-      !top_level_cond_is_satisfied(exec_const_cond, current_thd))
+      !top_level_cond_is_satisfied(exec_const_cond, thd))
     zero_result_cause= "Impossible WHERE noticed after reading const tables";
 
   /* 
@@ -9325,7 +9325,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         DBUG_EXECUTE("where",print_where(join->exec_const_cond,"constants",
 					 QT_ORDINARY););
         if (join->exec_const_cond && !join->exec_const_cond->is_expensive() &&
-            !top_level_cond_is_satisfied(join->exec_const_cond, current_thd))
+            !top_level_cond_is_satisfied(join->exec_const_cond, join->thd))
         {
           DBUG_PRINT("info",("Found impossible WHERE condition"));
           join->exec_const_cond= NULL;
@@ -12036,7 +12036,7 @@ return_zero_rows(JOIN *join, select_result *result, List<TABLE_LIST> &tables,
     */
     while ((item= it++))
       item->no_rows_in_result();
-    if (!top_level_cond_is_satisfied(having, current_thd))
+    if (!top_level_cond_is_satisfied(having, join->thd))
       send_row=0;
   }
   if (!(result->send_result_set_metadata(fields,
@@ -17193,7 +17193,7 @@ do_select(JOIN *join,List<Item> *fields,TABLE *table,Procedure *procedure)
       sufficient to check only the condition pseudo_bits_cond.
     */
     DBUG_ASSERT(join->outer_ref_cond == NULL);
-    if (top_level_cond_is_satisfied(join->pseudo_bits_cond, current_thd))
+    if (top_level_cond_is_satisfied(join->pseudo_bits_cond, join->thd))
     {
       error= (*end_select)(join, 0, 0);
       if (error == NESTED_LOOP_OK || error == NESTED_LOOP_QUERY_LIMIT)
@@ -17209,7 +17209,7 @@ do_select(JOIN *join,List<Item> *fields,TABLE *table,Procedure *procedure)
     }
     else if (join->send_row_on_empty_set())
     {
-      if (top_level_cond_is_satisfied(join->having, current_thd))
+      if (top_level_cond_is_satisfied(join->having, join->thd))
       {
         List<Item> *columns_list= (procedure ? &join->procedure_fields_list :
                                    fields);
@@ -17235,7 +17235,7 @@ do_select(JOIN *join,List<Item> *fields,TABLE *table,Procedure *procedure)
                           dbug_serve_apcs(join->thd, 1);
                    );
 
-    if (!top_level_cond_is_satisfied(join->outer_ref_cond, current_thd))
+    if (!top_level_cond_is_satisfied(join->outer_ref_cond, join->thd))
       error= NESTED_LOOP_NO_MORE_ROWS;
     else
       error= sub_select(join,join_tab,0);
@@ -17559,7 +17559,7 @@ sub_select(JOIN *join,JOIN_TAB *join_tab,bool end_of_records)
 
     /* Set first_unmatched for the last inner table of this group */
     join_tab->last_inner->first_unmatched= join_tab;
-    if (!top_level_cond_is_satisfied(join_tab->on_precond, current_thd))
+    if (!top_level_cond_is_satisfied(join_tab->on_precond, join->thd))
       rc= NESTED_LOOP_NO_MORE_ROWS;
   }
   join->thd->get_stmt_da()->reset_current_row_for_warning();
@@ -17673,7 +17673,7 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
 
   if (select_cond)
   {
-    select_cond_result= top_level_cond_is_satisfied(select_cond, current_thd);
+    select_cond_result= top_level_cond_is_satisfied(select_cond, join->thd);
 
     /* check for errors evaluating the condition */
     if (join->thd->is_error())
@@ -17721,7 +17721,7 @@ evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
         DBUG_ASSERT(!(tab->table->reginfo.not_exists_optimize &&
                      !tab->select_cond));
 
-        if (!top_level_cond_is_satisfied(tab->select_cond, current_thd))
+        if (!top_level_cond_is_satisfied(tab->select_cond, join->thd))
         {
           /* The condition attached to table tab is false */
 
@@ -17862,7 +17862,7 @@ evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab)
     mark_as_null_row(join_tab->table);       // For group by without error
     select_cond= join_tab->select_cond;
     /* Check all attached conditions for inner table rows. */
-    if (!top_level_cond_is_satisfied(select_cond, current_thd))
+    if (!top_level_cond_is_satisfied(select_cond, join->thd))
       return NESTED_LOOP_OK;
   }
   join_tab--;
@@ -17884,7 +17884,7 @@ evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab)
     first_unmatched->found= 1;
     for (JOIN_TAB *tab= first_unmatched; tab <= join_tab; tab++)
     {
-      if (!top_level_cond_is_satisfied(tab->select_cond, current_thd))
+      if (!top_level_cond_is_satisfied(tab->select_cond, join->thd))
       {
         join->return_tab= tab;
         return NESTED_LOOP_OK;
@@ -18058,7 +18058,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
     (*tab->on_expr_ref)->update_used_tables();
     DBUG_ASSERT((*tab->on_expr_ref)->const_item());
 #endif
-    if ((table->null_row= !top_level_cond_is_satisfied(*tab->on_expr_ref, current_thd)))
+    if ((table->null_row= !top_level_cond_is_satisfied(*tab->on_expr_ref, tab->join->thd)))
       mark_as_null_row(table);  
   }
   if (!table->null_row)
@@ -18678,7 +18678,7 @@ end_send(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
       /* Copy non-aggregated fields when loose index scan is used. */
       copy_fields(&join->tmp_table_param);
     }
-    if (!top_level_cond_is_satisfied(join->having, current_thd))
+    if (!top_level_cond_is_satisfied(join->having, join->thd))
       DBUG_RETURN(NESTED_LOOP_OK);               // Didn't match having
     if (join->procedure)
     {
@@ -18787,7 +18787,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	int error=0;
 	if (join->procedure)
 	{
-	  if (!top_level_cond_is_satisfied(join->having, current_thd))
+	  if (!top_level_cond_is_satisfied(join->having, join->thd))
 	    error= -1;				// Didn't satisfy having
  	  else
 	  {
@@ -18813,7 +18813,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
             while ((item= it++))
               item->no_rows_in_result();
 	  }
-	  if (!top_level_cond_is_satisfied(join->having, current_thd))
+	  if (!top_level_cond_is_satisfied(join->having, join->thd))
 	    error= -1;				// Didn't satisfy having
 	  else
 	  {
@@ -18904,7 +18904,7 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
     if (copy_funcs(join->tmp_table_param.items_to_copy, join->thd))
       DBUG_RETURN(NESTED_LOOP_ERROR);           /* purecov: inspected */
 
-    if (top_level_cond_is_satisfied(join->having, current_thd))
+    if (top_level_cond_is_satisfied(join->having, join->thd))
     {
       int error;
       join->found_records++;
@@ -19098,7 +19098,7 @@ end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	}
         copy_sum_funcs(join->sum_funcs,
                        join->sum_funcs_end[send_group_parts]);
-	if (top_level_cond_is_satisfied(join->having, current_thd))
+	if (top_level_cond_is_satisfied(join->having, join->thd))
 	{
           int error= table->file->ha_write_tmp_row(table->record[0]);
           if (error && 
@@ -20738,7 +20738,7 @@ static int remove_dup_with_compare(THD *thd, TABLE *table, Field **first_field,
 	break;
       goto err;
     }
-    if (!top_level_cond_is_satisfied(having, current_thd))
+    if (!top_level_cond_is_satisfied(having, thd))
     {
       if ((error= file->ha_delete_row(record)))
 	goto err;
@@ -20856,7 +20856,7 @@ static int remove_dup_with_hash_index(THD *thd, TABLE *table,
 	break;
       goto err;
     }
-    if (!top_level_cond_is_satisfied(having, current_thd))
+    if (!top_level_cond_is_satisfied(having, thd))
     {
       if ((error= file->ha_delete_row(record)))
 	goto err;
@@ -22819,7 +22819,7 @@ int JOIN::rollup_send_data(uint idx)
     memcpy((char*) ref_pointer_array,
 	   (char*) rollup.ref_pointer_arrays[i],
 	   ref_pointer_array_size);
-    if ((top_level_cond_is_satisfied(having, current_thd)))
+    if ((top_level_cond_is_satisfied(having, thd)))
     {
       if (send_records < unit->select_limit_cnt && do_send_rows &&
 	  (res= result->send_data(rollup.fields[i])) > 0)
@@ -22862,7 +22862,7 @@ int JOIN::rollup_write_data(uint idx, TABLE *table_arg)
     memcpy((char*) ref_pointer_array,
 	   (char*) rollup.ref_pointer_arrays[i],
 	   ref_pointer_array_size);
-    if (top_level_cond_is_satisfied(having, current_thd))
+    if (top_level_cond_is_satisfied(having, thd))
     {
       int write_error;
       Item *item;
