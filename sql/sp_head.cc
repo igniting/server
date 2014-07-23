@@ -1322,6 +1322,7 @@ sp_head::execute(THD *thd, bool merge_da_on_success)
     thd->profiling.finish_current_query();
     thd->profiling.start_new_query("continuing inside routine");
 #endif
+    thd->utime_before_query= 0;
 
     /* get_instr returns NULL when we're done. */
     i = get_instr(ip);

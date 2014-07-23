@@ -68,6 +68,7 @@
 
 #include <fstream>
 
+#include "lsqr.h"
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -899,7 +900,8 @@ THD::THD()
     main_da(0, false, false),
    m_stmt_da(&main_da),
    thd_cost_factors(cost_factors),
-   total_time(0)
+   equation_no(0),
+   utime_before_query(0)
 {
   ulong tmp;
 
@@ -6434,21 +6436,74 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
 
 void THD::build_equation()
 {
-  total_time= utime_after_query - utime_before_query;
-  solve_equation();
+  if(utime_before_query != 0)
+  {
+    coefficients[equation_no][MAX_CONSTANTS].value= utime_after_query - utime_before_query;
+    equation_no++;
+  }
+  if(equation_no == MAX_EQUATIONS)
+  {
+    solve_equation();
+    equation_no= 0;
+  }
+}
+
+// Helper function, TODO:move it in lsqr
+void mult(long mode, dvec *x, dvec *y, void *prod)
+{
+  long num_cols = x->length;
+  long num_rows = y->length;
+  long i, j;
+  dvec *A = (dvec *)prod;
+  /*
+   * Compute  Y = Y + A*X
+   */
+  if(mode == 0)
+  {
+    for(i=0; i < num_rows; i++)
+    {
+      for(j=0; j < num_cols; j++)
+        y->elements[i] += A->elements[i*num_cols+j]*x->elements[j];
+    }
+  }
+  /*
+   * Compute  X = X + A^T*Y
+   */
+  if(mode == 1)
+  {
+    for(i=0; i < num_cols; i++)
+    {
+      for(j=0; j < num_rows; j++)
+        x->elements[i] += A->elements[j*num_cols+i]*y->elements[j];
+    }
+  }
 }
 
 void THD::solve_equation()
 {
-  /*
-     Currently just dump all the coefficients to a file
-  */
-  std::ofstream datafile;
-  char file_name[100];
-  my_snprintf(file_name, 100, "/tmp/mariadb_cost_coefficients_%lu.txt", thread_id);
-  datafile.open(file_name, std::ios::app);
-  for(int i=0; i < MAX_CONSTANTS; i++)
-    datafile << coefficients[i].value << " ";
-  datafile << total_time << "\n";
-  datafile.close();
+  lsqr_input   *in;
+  lsqr_output  *out;
+  lsqr_work    *work;
+  lsqr_func    *func;
+  dvec         *prod;
+  long num_rows= equation_no;
+  long num_cols= MAX_CONSTANTS;
+  long row_indx, col_indx;
+  alloc_lsqr_mem( &in, &out, &work, &func, num_rows, num_cols );
+  func->mat_vec_prod= mult;
+  prod= (dvec *) alloc_dvec(num_rows*num_cols);
+  for(row_indx= 0; row_indx < num_rows; row_indx++)
+    for(col_indx= 0; col_indx < num_cols; col_indx++)
+      prod->elements[row_indx*num_cols+col_indx]= coefficients[row_indx][col_indx].value;
+  for(row_indx=0; row_indx < num_rows; row_indx++)
+    in->rhs_vec->elements[row_indx]= coefficients[row_indx][MAX_CONSTANTS].value;
+  in->num_rows = num_rows;
+  in->num_cols = num_cols;
+  in->rel_mat_err = 1.0e-15;
+  in->rel_rhs_err = 1.0e-15;
+  in->max_iter = num_rows + num_cols + 50;
+  lsqr(in, out, work, func, prod);
+  // Solution is in out->sol_vec->elements
+  free_lsqr_mem(in, out, work, func);
+  free_dvec(prod);
 }

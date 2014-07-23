@@ -3731,13 +3731,13 @@ public:
   }
 private:
   Cost_factors thd_cost_factors;
-  eq_coefficient coefficients[MAX_CONSTANTS];
-  ulonglong total_time;
+  eq_coefficient coefficients[MAX_EQUATIONS][MAX_CONSTANTS+1];
+  uint equation_no;
 public:
   ulonglong utime_before_query;
   inline void inc_coefficient(uint factor, int engine_index= -1)
   {
-    coefficients[get_factor_index(factor, engine_index)].value++;
+    coefficients[equation_no][get_factor_index(factor, engine_index)].value++;
   }
   void build_equation();
   void solve_equation();

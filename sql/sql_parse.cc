@@ -757,7 +757,7 @@ static void handle_bootstrap_impl(THD *thd)
     thd->profiling.start_new_query();
     thd->profiling.set_query_source(thd->query(), length);
 #endif
-
+    thd->utime_before_query= 0;
     /*
       We don't need to obtain LOCK_thread_count here because in bootstrap
       mode we have only one thread.

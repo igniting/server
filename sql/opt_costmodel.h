@@ -5,6 +5,7 @@
 
 class handler;
 
+#define MAX_EQUATIONS 20
 #define MAX_CONSTANTS 130
 #define MAX_GLOBAL_CONSTANTS 2
 #define TIME_FOR_COMPARE 0
