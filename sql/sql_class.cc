@@ -6440,11 +6440,17 @@ void THD::build_equation()
   {
     coefficients[equation_no][MAX_CONSTANTS].value= utime_after_query - utime_before_query;
     equation_no++;
+    utime_before_query= 0;
   }
   if(equation_no == MAX_EQUATIONS)
   {
     solve_equation();
+    /* Reset everything */
     equation_no= 0;
+    utime_before_query= 0;
+    for(uint i= 0; i < equation_no; i++)
+      for(uint j= 0; j <= MAX_CONSTANTS; j++)
+        coefficients[i][j].value= 0;
   }
 }
 
