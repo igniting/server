@@ -27,6 +27,7 @@ ${ZLIB_INCLUDE_DIR}
 ${SSL_INCLUDE_DIRS}
 ${SSL_INTERNAL_INCLUDE_DIRS}
 ${CMAKE_SOURCE_DIR}/sql/backup
+${CMAKE_SOURCE_DIR}/clsqr
 )
 
 SET(GEN_SOURCES
@@ -104,6 +105,7 @@ SET(SQL_EMBEDDED_SOURCES emb_qcache.cc libmysqld.c lib_sql.cc
            ../sql/sql_explain.cc ../sql/sql_explain.h
            ../sql/compat56.cc
            ../sql/table_cache.cc
+           ../sql/opt_costmodel.h ../sql/opt_costmodel.cc
            ${GEN_SOURCES}
            ${MYSYS_LIBWRAP_SOURCE}
 )
@@ -123,7 +125,7 @@ ENDIF()
 
 
 SET(LIBS 
-  dbug strings mysys mysys_ssl pcre vio 
+  dbug strings mysys mysys_ssl pcre vio clsqr
   ${ZLIB_LIBRARY} ${SSL_LIBRARIES} 
   ${LIBWRAP} ${LIBCRYPT} ${LIBDL}
   ${MYSQLD_STATIC_PLUGIN_LIBS}
