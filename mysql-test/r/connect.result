@@ -16,6 +16,7 @@ host
 index_stats
 innodb_index_stats
 innodb_table_stats
+optimizer_cost_factors
 plugin
 proc
 procs_priv
@@ -56,6 +57,7 @@ host
 index_stats
 innodb_index_stats
 innodb_table_stats
+optimizer_cost_factors
 plugin
 proc
 procs_priv
@@ -104,6 +106,7 @@ host
 index_stats
 innodb_index_stats
 innodb_table_stats
+optimizer_cost_factors
 plugin
 proc
 procs_priv
