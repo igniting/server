@@ -56,6 +56,9 @@
 *------------------------------------------------------------------------------
 */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*---------------*/
 /* Include files */
 /*---------------*/
@@ -398,3 +401,6 @@ double dvec_norm2( dvec * );
 void dvec_scale( double, dvec * );
 void dvec_copy( dvec *, dvec * );
 
+#ifdef __cplusplus
+}
+#endif
