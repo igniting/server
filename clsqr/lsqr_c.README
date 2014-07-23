@@ -1,9 +1,8 @@
 lsqr_c.README
 
-The software for LSQR (C version) is provided by SOL, Stanford University
-under the terms of the OSI Common Public License (CPL):
-http://www.opensource.org/licenses/cpl1.0.php
-
+This software is used under BSD License as per the instructions given at
+http://web.stanford.edu/group/SOL/software.html. Please read the LICENSE file
+for more details.
 
 08 Sep 1999: First set of files provided by James W. Howse <jhowse@lanl.gov>.
 

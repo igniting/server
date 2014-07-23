@@ -1,7 +1,10 @@
 /*
 * lsqr.h
 * Contains auxiliary functions, data type definitions, and function 
-* prototypes for the iterative linear solver LSQR. 
+* prototypes for the iterative linear solver LSQR.
+*
+* This file is used under BSD License as per instructions given at
+* http://web.stanford.edu/group/SOL/software.html
 *
 * 08 Sep 1999: First version from James W. Howse <jhowse@lanl.gov>
 * 02 Sep 2007: Dima Sorkin <dima.sorkin@gmail.com> advises that

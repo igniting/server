@@ -7,6 +7,9 @@
 * lsqr itself (the main algorithm),
 * and functions that scale, copy, and compute the Euclidean norm of a vector.
 *
+* This file is used under BSD License as per instructions given at
+* http://web.stanford.edu/group/SOL/software.html
+*
 *
 * The following history comments are maintained by Michael Saunders.
 *
