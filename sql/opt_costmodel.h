@@ -108,8 +108,10 @@ private:
   Global_cost_factors global;
   //TODO: MAX_HA is not accessible here
   Engine_cost_factors engine[64];
+  bool is_lock_initialized;
 
 public:
+  Cost_factors(): is_lock_initialized(false) {}
   void init();
   void re_init(THD *thd);
   /* Engine specific constants */
@@ -125,9 +127,12 @@ public:
 
   /* Add data from another Cost_factors object */
   void add_data(Cost_factors that);
+
+  void cleanup();
 };
 
 extern Cost_factors cost_factors;
+extern mysql_mutex_t cost_factors_lock;
 
 /* Structure to store coefficients of system of linear equations */
 struct eq_coefficient

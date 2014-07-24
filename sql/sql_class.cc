@@ -901,6 +901,7 @@ THD::THD()
    m_stmt_da(&main_da),
    thd_cost_factors(cost_factors),
    equation_no(0),
+   unsaved_cost_factors(false),
    utime_before_query(0)
 {
   ulong tmp;
@@ -1523,6 +1524,17 @@ void THD::cleanup(void)
   }
 #endif
 
+  /* Update thd_cost_factors to global cost_factors */
+  if(equation_no != 0)
+    solve_equation();
+
+  if(unsaved_cost_factors)
+  {
+    mysql_mutex_lock(&cost_factors_lock);
+    cost_factors.add_data(thd_cost_factors);
+    mysql_mutex_unlock(&cost_factors_lock);
+  }
+
   mysql_ha_cleanup(this);
   locked_tables_list.unlock_locked_tables(this);
 
@@ -1587,12 +1599,6 @@ THD::~THD()
   /* Ensure that no one is using THD */
   mysql_mutex_lock(&LOCK_thd_data);
   mysql_mutex_unlock(&LOCK_thd_data);
-
-  /* Update thd_cost_factors to global cost_factors */
-  if(equation_no != 0)
-    solve_equation();
-  /* TODO: Ensure no other thd is updating */
-  cost_factors.add_data(thd_cost_factors);
 
   /* Close connection */
 #ifndef EMBEDDED_LIBRARY
@@ -6447,6 +6453,7 @@ void THD::build_equation()
     coefficients[equation_no][MAX_CONSTANTS].value= utime_after_query - utime_before_query;
     equation_no++;
     utime_before_query= 0;
+    unsaved_cost_factors= true;
   }
   if(equation_no == MAX_EQUATIONS)
   {

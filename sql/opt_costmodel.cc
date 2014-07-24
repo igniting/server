@@ -113,6 +113,12 @@ void Cost_factors::init()
     DBUG_VOID_RETURN;
   }
 
+  PSI_mutex_key key_cost_factors_lock;
+  PSI_mutex_info mutexes[] = {{ &key_cost_factors_lock, "cost_factors_lock", 0}};
+  mysql_mutex_register("sql", mutexes, 1);
+  mysql_mutex_init(key_cost_factors_lock, &cost_factors_lock, NULL);
+  is_lock_initialized= true;
+
   new_thd->thread_stack= (char *) &new_thd;
   new_thd->store_globals();
   new_thd->set_db(db_name.str, db_name.length);
@@ -220,4 +226,14 @@ void Cost_factors::add_data(Cost_factors that)
     engine[index].update_engine_factor(that.engine[index]);
 }
 
+void Cost_factors::cleanup()
+{
+  if(is_lock_initialized)
+  {
+    mysql_mutex_destroy(&cost_factors_lock);
+  }
+}
+
 Cost_factors cost_factors;
+mysql_mutex_t cost_factors_lock;
+

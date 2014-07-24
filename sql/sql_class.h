@@ -3733,6 +3733,8 @@ private:
   Cost_factors thd_cost_factors;
   eq_coefficient coefficients[MAX_EQUATIONS][MAX_CONSTANTS+1];
   uint equation_no;
+  /* Write thd_cost_factors to global cost factors if true */
+  bool unsaved_cost_factors;
 public:
   ulonglong utime_before_query;
   inline void inc_coefficient(uint factor, int engine_index= -1)
