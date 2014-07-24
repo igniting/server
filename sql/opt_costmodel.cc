@@ -64,6 +64,19 @@ void Global_cost_factors::set_global_factor(const char *name, double value)
   assign_factor_value(name, value, all_names);
 }
 
+void Global_cost_factors::update_global_factor(uint index, double query_time)
+{
+  switch(index)
+  {
+    case TIME_FOR_COMPARE:
+      time_for_compare.add_query_time(query_time);
+      break;
+    case TIME_FOR_COMPARE_ROWID:
+      time_for_compare_rowid.add_query_time(query_time);
+      break;
+  }
+}
+
 void Engine_cost_factors::set_engine_factor(const char *name, double value)
 {
   st_factor all_names[] = {
@@ -72,6 +85,19 @@ void Engine_cost_factors::set_engine_factor(const char *name, double value)
     {0, 0}
   };
   assign_factor_value(name, value, all_names);
+}
+
+void Engine_cost_factors::update_engine_factor(uint index, double query_time)
+{
+  switch(index)
+  {
+    case READ_TIME:
+      read_time.add_query_time(query_time);
+      break;
+    case SCAN_TIME:
+      scan_time.add_query_time(query_time);
+      break;
+  }
 }
 
 /* Interface functions */
@@ -172,6 +198,18 @@ double Cost_factors::time_for_compare() const
 double Cost_factors::time_for_compare_rowid() const
 {
   return global.time_for_compare_rowid.value;
+}
+
+void Cost_factors::update_cost_factor(uint index, double query_time)
+{
+  if(index < MAX_GLOBAL_CONSTANTS)
+    global.update_global_factor(index, query_time);
+  else
+  {
+    uint engine_no = (index - MAX_GLOBAL_CONSTANTS)/ MAX_ENGINE_CONSTANTS;
+    uint const_no = (index - MAX_GLOBAL_CONSTANTS) % MAX_ENGINE_CONSTANTS;
+    engine[engine_no].update_engine_factor(const_no, query_time);
+  }
 }
 
 Cost_factors cost_factors;

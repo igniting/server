@@ -6509,7 +6509,19 @@ void THD::solve_equation()
   in->rel_rhs_err = 1.0e-15;
   in->max_iter = num_rows + num_cols + 50;
   lsqr(in, out, work, func, prod);
-  // Solution is in out->sol_vec->elements
+  // Update the thd_cost_factors
+  uint index;
+  for(index= 0; index< MAX_CONSTANTS; index++)
+  {
+    if(out->sol_vec->elements[index] != 0)
+    {
+      for(row_indx= 0; row_indx< num_rows; row_indx++)
+      {
+        double query_time = coefficients[row_indx][index].value*out->sol_vec->elements[index];
+        thd_cost_factors.update_cost_factor(index, query_time);
+      }
+    }
+  }
   free_lsqr_mem(in, out, work, func);
   free_dvec(prod);
 }

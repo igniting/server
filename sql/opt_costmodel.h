@@ -35,6 +35,13 @@ public:
     total_query_time= 0;
     total_query_time_squared= 0;
   }
+
+  inline void add_query_time(double query_time)
+  {
+    total_queries++;
+    total_query_time += query_time;
+    total_query_time_squared += (query_time*query_time);
+  }
 };
 
 class Global_cost_factors
@@ -59,6 +66,7 @@ public:
   }
 
   void set_global_factor(const char *name, double value);
+  void update_global_factor(uint index, double query_time);
 };
 
 class Engine_cost_factors
@@ -74,6 +82,7 @@ public:
   }
 
   void set_engine_factor(const char *name, double value);
+  void update_engine_factor(uint index, double query_time);
 };
 
 class Cost_factors
@@ -93,6 +102,9 @@ public:
   /* Global constants */
   double time_for_compare() const;
   double time_for_compare_rowid() const;
+
+  /* Update a cost factor */
+  void update_cost_factor(uint index, double query_time);
 };
 
 extern Cost_factors cost_factors;
