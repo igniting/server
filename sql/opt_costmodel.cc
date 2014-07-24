@@ -212,4 +212,12 @@ void Cost_factors::update_cost_factor(uint index, double query_time)
   }
 }
 
+void Cost_factors::add_data(Cost_factors that)
+{
+  global.update_global_factor(that.global);
+  uint index;
+  for(index= 0; index < MAX_HA; index++)
+    engine[index].update_engine_factor(that.engine[index]);
+}
+
 Cost_factors cost_factors;

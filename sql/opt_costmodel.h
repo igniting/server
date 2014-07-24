@@ -42,6 +42,13 @@ public:
     total_query_time += query_time;
     total_query_time_squared += (query_time*query_time);
   }
+
+  inline void update_all(Cost_factor that)
+  {
+    total_queries+= that.total_queries;
+    total_query_time+= that.total_query_time;
+    total_query_time_squared+= that.total_query_time_squared;
+  }
 };
 
 class Global_cost_factors
@@ -67,6 +74,11 @@ public:
 
   void set_global_factor(const char *name, double value);
   void update_global_factor(uint index, double query_time);
+  inline void update_global_factor(Global_cost_factors that)
+  {
+    time_for_compare.update_all(that.time_for_compare);
+    time_for_compare_rowid.update_all(that.time_for_compare_rowid);
+  }
 };
 
 class Engine_cost_factors
@@ -83,6 +95,11 @@ public:
 
   void set_engine_factor(const char *name, double value);
   void update_engine_factor(uint index, double query_time);
+  inline void update_engine_factor(Engine_cost_factors that)
+  {
+    read_time.update_all(that.read_time);
+    scan_time.update_all(that.scan_time);
+  }
 };
 
 class Cost_factors
@@ -105,6 +122,9 @@ public:
 
   /* Update a cost factor */
   void update_cost_factor(uint index, double query_time);
+
+  /* Add data from another Cost_factors object */
+  void add_data(Cost_factors that);
 };
 
 extern Cost_factors cost_factors;

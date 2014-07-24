@@ -1588,6 +1588,12 @@ THD::~THD()
   mysql_mutex_lock(&LOCK_thd_data);
   mysql_mutex_unlock(&LOCK_thd_data);
 
+  /* Update thd_cost_factors to global cost_factors */
+  if(equation_no != 0)
+    solve_equation();
+  /* TODO: Ensure no other thd is updating */
+  cost_factors.add_data(thd_cost_factors);
+
   /* Close connection */
 #ifndef EMBEDDED_LIBRARY
   if (net.vio)
@@ -6508,6 +6514,7 @@ void THD::solve_equation()
   in->rel_mat_err = 1.0e-15;
   in->rel_rhs_err = 1.0e-15;
   in->max_iter = num_rows + num_cols + 50;
+  in->lsqr_fp_out = NULL;
   lsqr(in, out, work, func, prod);
   // Update the thd_cost_factors
   uint index;
