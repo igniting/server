@@ -3731,7 +3731,8 @@ public:
   }
 private:
   Cost_factors thd_cost_factors;
-  eq_coefficient coefficients[MAX_EQUATIONS][MAX_CONSTANTS+1];
+  std::map<uint, eq_coefficient> coefficients[MAX_EQUATIONS];
+  ulonglong query_time[MAX_EQUATIONS];
   uint equation_no;
   /* Write thd_cost_factors to global cost factors if true */
   bool unsaved_cost_factors;

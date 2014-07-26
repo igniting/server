@@ -3,6 +3,8 @@
 #ifndef SQL_OPT_COSTMODEL_INCLUDED
 #define SQL_OPT_COSTMODEL_INCLUDED
 
+#include <map>
+
 class handler;
 
 #define MAX_EQUATIONS 20
@@ -108,8 +110,7 @@ class Cost_factors
 {
 private:
   Global_cost_factors global;
-  //TODO: MAX_HA is not accessible here
-  Engine_cost_factors engine[64];
+  std::map<uint, Engine_cost_factors> engine;
   bool is_lock_initialized;
 
 public:

@@ -6450,7 +6450,7 @@ void THD::build_equation()
 {
   if(utime_before_query != 0)
   {
-    coefficients[equation_no][MAX_CONSTANTS].value= utime_after_query - utime_before_query;
+    query_time[equation_no]= utime_after_query - utime_before_query;
     equation_no++;
     utime_before_query= 0;
     unsaved_cost_factors= true;
@@ -6462,18 +6462,19 @@ void THD::build_equation()
     equation_no= 0;
     utime_before_query= 0;
     for(uint i= 0; i < equation_no; i++)
-      for(uint j= 0; j <= MAX_CONSTANTS; j++)
-        coefficients[i][j].value= 0;
+      coefficients[i].clear();
   }
 }
 
-// Helper function, TODO:move it in lsqr
-void mult(long mode, dvec *x, dvec *y, void *prod)
+/* Define matrix multiplication as per our internal representation
+   of sparse matrices, which is currently a list of map
+*/
+void lsqr_mult(long mode, dvec *x, dvec *y, void *prod)
 {
-  long num_cols = x->length;
   long num_rows = y->length;
-  long i, j;
-  dvec *A = (dvec *)prod;
+  long i;
+  std::map<uint, eq_coefficient> *A = (std::map<uint, eq_coefficient> *)prod;
+  std::map<uint, eq_coefficient>::iterator it;
   /*
    * Compute  Y = Y + A*X
    */
@@ -6481,8 +6482,8 @@ void mult(long mode, dvec *x, dvec *y, void *prod)
   {
     for(i=0; i < num_rows; i++)
     {
-      for(j=0; j < num_cols; j++)
-        y->elements[i] += A->elements[i*num_cols+j]*x->elements[j];
+      for(it=A[i].begin(); it!=A[i].end(); it++)
+        y->elements[i] += it->second.value*x->elements[it->first];
     }
   }
   /*
@@ -6490,10 +6491,10 @@ void mult(long mode, dvec *x, dvec *y, void *prod)
    */
   if(mode == 1)
   {
-    for(i=0; i < num_cols; i++)
+    for(i=0; i < num_rows; i++)
     {
-      for(j=0; j < num_rows; j++)
-        x->elements[i] += A->elements[j*num_cols+i]*y->elements[j];
+      for(it=A[i].begin(); it!=A[i].end(); it++)
+        x->elements[it->first] += it->second.value*y->elements[i];
     }
   }
 }
@@ -6504,25 +6505,20 @@ void THD::solve_equation()
   lsqr_output  *out;
   lsqr_work    *work;
   lsqr_func    *func;
-  dvec         *prod;
   long num_rows= equation_no;
   long num_cols= MAX_CONSTANTS;
-  long row_indx, col_indx;
+  long row_indx;
   alloc_lsqr_mem( &in, &out, &work, &func, num_rows, num_cols );
-  func->mat_vec_prod= mult;
-  prod= (dvec *) alloc_dvec(num_rows*num_cols);
-  for(row_indx= 0; row_indx < num_rows; row_indx++)
-    for(col_indx= 0; col_indx < num_cols; col_indx++)
-      prod->elements[row_indx*num_cols+col_indx]= coefficients[row_indx][col_indx].value;
+  func->mat_vec_prod= lsqr_mult;
   for(row_indx=0; row_indx < num_rows; row_indx++)
-    in->rhs_vec->elements[row_indx]= coefficients[row_indx][MAX_CONSTANTS].value;
+    in->rhs_vec->elements[row_indx]= query_time[row_indx];
   in->num_rows = num_rows;
   in->num_cols = num_cols;
   in->rel_mat_err = 1.0e-15;
   in->rel_rhs_err = 1.0e-15;
   in->max_iter = num_rows + num_cols + 50;
   in->lsqr_fp_out = NULL;
-  lsqr(in, out, work, func, prod);
+  lsqr(in, out, work, func, &coefficients);
   // Update the thd_cost_factors
   uint index;
   for(index= 0; index< MAX_CONSTANTS; index++)
@@ -6537,5 +6533,4 @@ void THD::solve_equation()
     }
   }
   free_lsqr_mem(in, out, work, func);
-  free_dvec(prod);
 }

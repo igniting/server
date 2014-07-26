@@ -197,12 +197,12 @@ end:
 
 double Cost_factors::read_factor(const handler *h) const
 {
-  return engine[h->ht->slot].read_time.value;
+  return engine.find(h->ht->slot)->second.read_time.value;
 }
 
 double Cost_factors::scan_factor(const handler *h) const
 {
-  return engine[h->ht->slot].scan_time.value;
+  return engine.find(h->ht->slot)->second.scan_time.value;
 }
 
 double Cost_factors::time_for_compare() const
@@ -245,4 +245,3 @@ void Cost_factors::cleanup()
 
 Cost_factors cost_factors;
 mysql_mutex_t cost_factors_lock;
-
