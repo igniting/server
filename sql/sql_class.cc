@@ -6531,8 +6531,8 @@ void THD::solve_equation()
     {
       for(row_indx= 0; row_indx< num_rows; row_indx++)
       {
-        double query_time = coefficients[row_indx][index].value*out->sol_vec->elements[index];
-        thd_cost_factors.update_cost_factor(index, query_time);
+        thd_cost_factors.update_cost_factor(index,
+            coefficients[row_indx][index].value, out->sol_vec->elements[index]);
       }
     }
   }

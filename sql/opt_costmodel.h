@@ -25,29 +25,29 @@ class Cost_factor
 {
 public:
   double value;
-  ulonglong total_queries;
-  double total_query_time;
-  double total_query_time_squared;
+  ulonglong total_ops;
+  double total_time;
+  double total_time_squared;
   
   Cost_factor()
   {
-    total_queries= 0;
-    total_query_time= 0;
-    total_query_time_squared= 0;
+    total_ops= 0;
+    total_time= 0;
+    total_time_squared= 0;
   }
 
-  inline void add_query_time(double query_time)
+  inline void add_time(ulonglong ops, double value)
   {
-    total_queries++;
-    total_query_time += query_time;
-    total_query_time_squared += (query_time*query_time);
+    total_ops+= ops;
+    total_time += (ops*value);
+    total_time_squared += (ops*value)*(ops*value);
   }
 
   inline void update_all(Cost_factor that)
   {
-    total_queries+= that.total_queries;
-    total_query_time+= that.total_query_time;
-    total_query_time_squared+= that.total_query_time_squared;
+    total_ops+= that.total_ops;
+    total_time+= that.total_time;
+    total_time_squared+= that.total_time_squared;
   }
 };
 
@@ -73,7 +73,7 @@ public:
   }
 
   void set_global_factor(const char *name, double value);
-  void update_global_factor(uint index, double query_time);
+  void update_global_factor(uint index, ulonglong ops, double value);
   inline void update_global_factor(Global_cost_factors that)
   {
     time_for_compare.update_all(that.time_for_compare);
@@ -94,7 +94,7 @@ public:
   }
 
   void set_engine_factor(const char *name, double value);
-  void update_engine_factor(uint index, double query_time);
+  void update_engine_factor(uint index, ulonglong ops, double value);
   inline void update_engine_factor(Engine_cost_factors that)
   {
     read_time.update_all(that.read_time);
@@ -123,7 +123,7 @@ public:
   double time_for_compare_rowid() const;
 
   /* Update a cost factor */
-  void update_cost_factor(uint index, double query_time);
+  void update_cost_factor(uint index, ulonglong total_ops, double value);
 
   /* Add data from another Cost_factors object */
   void add_data(Cost_factors that);
