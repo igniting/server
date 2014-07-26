@@ -12,7 +12,7 @@ EXPLAIN
 
 use mysql;
 
-INSERT INTO optimizer_cost_factors values ('SCAN_TIME_FACTOR', 'MyISAM', 1000.0);
+INSERT INTO optimizer_cost_factors values ('SCAN_TIME_FACTOR', 'MyISAM', 1000.0, 0, 0.0, 0.0);
 
 --source include/restart_mysqld.inc
 

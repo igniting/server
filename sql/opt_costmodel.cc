@@ -14,7 +14,10 @@ enum cost_factors_col
 {
   COST_FACTORS_CONST_NAME,
   COST_FACTORS_ENGINE_NAME,
-  COST_FACTORS_CONST_VALUE
+  COST_FACTORS_CONST_VALUE,
+  COST_FACTORS_TOTAL_OPS,
+  COST_FACTORS_TOTAL_TIME,
+  COST_FACTORS_TOTAL_TIME_SQUARED
 };
 
 /* Helper functions for Cost_factors::init() */
@@ -31,19 +34,21 @@ inline int open_table(THD *thd, TABLE_LIST *table,
 /* Helper structure for assigning the value to appropriate variable by name */
 struct st_factor {
   const char *name;
-  double *value;
+  Cost_factor *cost_factor;
 };
 
-void assign_factor_value(const char *const_name,
-                         double const_value,
-                         st_factor *factors)
+void assign_factor_value(const char *const_name, double value, ulonglong total_ops,
+    double total_time, double total_time_squared, st_factor *factors)
 {
   st_factor *f;
   for(f=factors; f->name; f++)
   {
     if(strcasecmp(f->name, const_name) == 0)
     {
-      *(f->value)= const_value;
+      f->cost_factor->value= value;
+      f->cost_factor->total_ops= total_ops;
+      f->cost_factor->total_time= total_time;
+      f->cost_factor->total_time_squared= total_time_squared;
       break;
     }
   }
@@ -54,14 +59,15 @@ void assign_factor_value(const char *const_name,
   }
 }
 
-void Global_cost_factors::set_global_factor(const char *name, double value)
+void Global_cost_factors::set_global_factor(const char *name, double value,
+    ulonglong total_ops, double total_time, double total_time_squared)
 {
   st_factor all_names[] = {
-    {"TIME_FOR_COMPARE", &time_for_compare.value},
-    {"TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid.value},
+    {"TIME_FOR_COMPARE", &time_for_compare},
+    {"TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid},
     {0, 0}
   };
-  assign_factor_value(name, value, all_names);
+  assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
 void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double value)
@@ -77,14 +83,15 @@ void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double
   }
 }
 
-void Engine_cost_factors::set_engine_factor(const char *name, double value)
+void Engine_cost_factors::set_engine_factor(const char *name, double value,
+    ulonglong total_ops, double total_time, double total_time_squared)
 {
   st_factor all_names[] = {
-    {"READ_TIME_FACTOR", &read_time.value},
-    {"SCAN_TIME_FACTOR", &scan_time.value},
+    {"READ_TIME_FACTOR", &read_time},
+    {"SCAN_TIME_FACTOR", &scan_time},
     {0, 0}
   };
-  assign_factor_value(name, value, all_names);
+  assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
 void Engine_cost_factors::update_engine_factor(uint index, ulonglong ops, double value)
@@ -158,13 +165,15 @@ void Cost_factors::re_init(THD *thd)
     char *const_name= get_field(&mem, table->field[COST_FACTORS_CONST_NAME]);
     LEX_STRING engine_name;
     engine_name.str= get_field(&mem, table->field[COST_FACTORS_ENGINE_NAME]);
-    double const_value;
-    const_value= table->field[COST_FACTORS_CONST_VALUE]->val_real();
+    double const_value= table->field[COST_FACTORS_CONST_VALUE]->val_real();
+    ulonglong total_ops= (ulonglong) table->field[COST_FACTORS_TOTAL_OPS]->val_int();
+    double total_time= table->field[COST_FACTORS_TOTAL_TIME]->val_real();
+    double total_time_squared= table->field[COST_FACTORS_TOTAL_TIME_SQUARED]->val_real();
 
     // Engine name is null for global cost factors
     if(!engine_name.str)
     {
-      global.set_global_factor(const_name, const_value);
+      global.set_global_factor(const_name, const_value, total_ops, total_time, total_time_squared);
     }
     else
     {
@@ -173,7 +182,7 @@ void Cost_factors::re_init(THD *thd)
       if(engine_plugin != NULL)
       {
         uint slot= plugin_data(engine_plugin, handlerton *)->slot;
-        engine[slot].set_engine_factor(const_name, const_value);
+        engine[slot].set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
       }
     }
   }

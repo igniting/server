@@ -54,5 +54,5 @@ REPLACE INTO tmp_proxies_priv SELECT @current_hostname, 'root', '', '', TRUE, ''
 INSERT INTO  proxies_priv SELECT * FROM tmp_proxies_priv WHERE @had_proxies_priv_table=0;
 DROP TABLE tmp_proxies_priv;
 
-INSERT INTO optimizer_cost_factors VALUES ('TIME_FOR_COMPARE', '', 5.0);
-INSERT INTO optimizer_cost_factors VALUES ('TIME_FOR_COMPARE_ROWID', '', 500.0);
+INSERT INTO optimizer_cost_factors VALUES ('TIME_FOR_COMPARE', '', 5.0, 0, 0.0, 0.0);
+INSERT INTO optimizer_cost_factors VALUES ('TIME_FOR_COMPARE_ROWID', '', 500.0, 0, 0.0, 0.0);

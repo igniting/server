@@ -72,7 +72,8 @@ public:
     time_for_compare_rowid.value= 500;
   }
 
-  void set_global_factor(const char *name, double value);
+  void set_global_factor(const char *name, double value, ulonglong total_ops,
+      double total_time, double total_time_squared);
   void update_global_factor(uint index, ulonglong ops, double value);
   inline void update_global_factor(Global_cost_factors that)
   {
@@ -93,7 +94,8 @@ public:
     scan_time.value= 1;
   }
 
-  void set_engine_factor(const char *name, double value);
+  void set_engine_factor(const char *name, double value, ulonglong total_ops,
+      double total_time, double total_time_squared);
   void update_engine_factor(uint index, ulonglong ops, double value);
   inline void update_engine_factor(Engine_cost_factors that)
   {
