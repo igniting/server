@@ -2356,8 +2356,12 @@ void JOIN::save_explain_data(Explain_query *output, bool can_overwrite,
 
 void JOIN::exec()
 {
-  DBUG_ASSERT(thd->utime_before_query == 0);
-  thd->utime_before_query= microsecond_interval_timer();
+  /* Check assertion only if top level select and not a slave thread */
+  if(select_lex->select_number == 1 && !thd->slave_thread)
+  {
+    DBUG_ASSERT(thd->utime_before_query == 0);
+    thd->utime_before_query= microsecond_interval_timer();
+  }
   DBUG_EXECUTE_IF("show_explain_probe_join_exec_start", 
                   if (dbug_user_var_equals_int(thd, 
                                                "show_explain_probe_select_id", 
