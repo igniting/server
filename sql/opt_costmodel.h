@@ -53,6 +53,15 @@ public:
   }
 };
 
+/* Helper structure for assigning the value to appropriate variable by name */
+struct st_factor {
+  const char *name;
+  Cost_factor *cost_factor;
+  st_factor():name(0),cost_factor(0) {}
+  st_factor(const char *name, Cost_factor *cost_factor):
+    name(name),cost_factor(cost_factor) {}
+};
+
 class Global_cost_factors
 {
 public:
@@ -67,6 +76,7 @@ public:
     table.
   */
   Cost_factor time_for_compare_rowid;
+  st_factor all_names[MAX_GLOBAL_CONSTANTS+1];
 
   Global_cost_factors()
   {
@@ -74,6 +84,11 @@ public:
     time_for_compare_rowid.value= 500;
   }
 
+  inline void set_all_names()
+  {
+    all_names[0] = st_factor("TIME_FOR_COMPARE", &time_for_compare);
+    all_names[1] = st_factor("TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid);
+  }
   void set_global_factor(const char *name, double value, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_global_factor(uint index, ulonglong ops, double value);
@@ -89,6 +104,7 @@ class Engine_cost_factors
 public:
   Cost_factor read_time;
   Cost_factor scan_time;
+  st_factor all_names[MAX_ENGINE_CONSTANTS+1];
 
   Engine_cost_factors()
   {
@@ -96,6 +112,11 @@ public:
     scan_time.value= 1;
   }
 
+  inline void set_all_names()
+  {
+    all_names[0]= st_factor("READ_TIME_FACTOR", &read_time);
+    all_names[1]= st_factor("SCAN_TIME_FACTOR", &scan_time);
+  }
   void set_engine_factor(const char *name, double value, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_engine_factor(uint index, ulonglong ops, double value);
@@ -112,6 +133,7 @@ private:
   Global_cost_factors global;
   std::map<uint, Engine_cost_factors> engine;
   bool is_lock_initialized;
+  bool has_unsaved_data;
 
 public:
   Cost_factors(): is_lock_initialized(false) {}
@@ -130,6 +152,9 @@ public:
 
   /* Add data from another Cost_factors object */
   void add_data(Cost_factors that);
+
+  /* Write data to optimizer_cost_factors table */
+  void write_to_table();
 
   void cleanup();
 };

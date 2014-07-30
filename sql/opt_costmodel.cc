@@ -31,12 +31,6 @@ inline int open_table(THD *thd, TABLE_LIST *table,
   return open_system_tables_for_read(thd, table, backup);
 }
 
-/* Helper structure for assigning the value to appropriate variable by name */
-struct st_factor {
-  const char *name;
-  Cost_factor *cost_factor;
-};
-
 void assign_factor_value(const char *const_name, double value, ulonglong total_ops,
     double total_time, double total_time_squared, st_factor *factors)
 {
@@ -62,11 +56,7 @@ void assign_factor_value(const char *const_name, double value, ulonglong total_o
 void Global_cost_factors::set_global_factor(const char *name, double value,
     ulonglong total_ops, double total_time, double total_time_squared)
 {
-  st_factor all_names[] = {
-    {"TIME_FOR_COMPARE", &time_for_compare},
-    {"TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid},
-    {0, 0}
-  };
+  set_all_names();
   assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
@@ -86,11 +76,7 @@ void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double
 void Engine_cost_factors::set_engine_factor(const char *name, double value,
     ulonglong total_ops, double total_time, double total_time_squared)
 {
-  st_factor all_names[] = {
-    {"READ_TIME_FACTOR", &read_time},
-    {"SCAN_TIME_FACTOR", &scan_time},
-    {0, 0}
-  };
+  set_all_names();
   assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
@@ -217,6 +203,7 @@ double Cost_factors::time_for_compare_rowid() const
 
 void Cost_factors::update_cost_factor(uint index, ulonglong ops, double value)
 {
+  has_unsaved_data= true;
   if(index < MAX_GLOBAL_CONSTANTS)
     global.update_global_factor(index, ops, value);
   else
@@ -229,10 +216,109 @@ void Cost_factors::update_cost_factor(uint index, ulonglong ops, double value)
 
 void Cost_factors::add_data(Cost_factors that)
 {
+  has_unsaved_data= true;
   global.update_global_factor(that.global);
-  uint index;
-  for(index= 0; index < MAX_HA; index++)
-    engine[index].update_engine_factor(that.engine[index]);
+  for(std::map<uint, Engine_cost_factors>::iterator it= that.engine.begin();
+      it!= that.engine.end(); it++)
+    engine[it->first].update_engine_factor(it->second);
+}
+
+void Cost_factors::write_to_table()
+{
+  TABLE_LIST table_list;
+  Open_tables_backup open_tables_backup;
+  TABLE *table;
+
+  DBUG_ENTER("Cost_factors::write_to_table");
+
+  if(!has_unsaved_data)
+  {
+    DBUG_VOID_RETURN;
+  }
+
+  THD *thd = new THD;
+
+  if(!thd)
+  {
+    DBUG_VOID_RETURN;
+  }
+
+  thd->thread_stack= (char *) &thd;
+  thd->store_globals();
+  thd->set_db(db_name.str, db_name.length);
+
+  if(open_table(thd, &table_list, &open_tables_backup, true))
+  {
+    goto end;
+  }
+
+  table= table_list.table;
+  table->use_all_columns();
+
+  uchar key[MAX_KEY_LENGTH];
+
+  /* Write all global factors */
+  for(st_factor *f= global.all_names; f->name; f++)
+  {
+    if(f->cost_factor->total_ops != 0)
+    {
+      table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
+      table->field[1]->store("", 0, system_charset_info);
+      key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
+      if (table->file->ha_index_read_idx_map(table->record[0], 0,
+            key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
+      {
+        /* If the constant is not present, insert in table */
+      }
+      else
+      {
+        /* Update the column */
+        store_record(table, record[1]);
+        table->field[2]->store(f->cost_factor->value);
+        table->field[3]->store(f->cost_factor->total_ops);
+        table->field[4]->store(f->cost_factor->total_time);
+        table->field[5]->store(f->cost_factor->total_time_squared);
+        table->file->ha_update_row(table->record[1], table->record[0]);
+      }
+    }
+  }
+
+  /* Write all engine specific factors */
+  for(std::map<uint, Engine_cost_factors>::iterator it= engine.begin();
+      it != engine.end(); it++)
+  {
+    /* Get the engine name from the slot number, it->first */
+    LEX_STRING engine_name= hton2plugin[it->first]->name;
+    for(st_factor *f= it->second.all_names; f->name; f++)
+    {
+      if(f->cost_factor->total_ops != 0)
+      {
+        table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
+        table->field[1]->store(engine_name.str, engine_name.length, system_charset_info);
+        key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
+        if (table->file->ha_index_read_idx_map(table->record[0], 0,
+              key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
+        {
+          /* If the constant is not present, insert in table */
+        }
+        else
+        {
+          /* Update the column */
+          store_record(table, record[1]);
+          table->field[2]->store(f->cost_factor->value);
+          table->field[3]->store(f->cost_factor->total_ops);
+          table->field[4]->store(f->cost_factor->total_time);
+          table->field[5]->store(f->cost_factor->total_time_squared);
+          table->file->ha_update_row(table->record[1], table->record[0]);
+        }
+      }
+    }
+  }
+  close_system_tables(thd, &open_tables_backup);
+end:
+  delete thd;
+  set_current_thd(0);
+  DBUG_VOID_RETURN;
 }
 
 void Cost_factors::cleanup()

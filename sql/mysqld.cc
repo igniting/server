@@ -2006,6 +2006,8 @@ void clean_up(bool print_message)
   injector::free_instance();
   mysql_bin_log.cleanup();
 
+  cost_factors.write_to_table();
+
   my_tz_free();
   my_dboptions_cache_free();
   ignore_db_dirs_free();
