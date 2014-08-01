@@ -82,6 +82,7 @@ public:
   {
     time_for_compare.value= 5;   // 5 compares == one read
     time_for_compare_rowid.value= 500;
+    set_all_names();
   }
 
   inline void set_all_names()
@@ -104,12 +105,15 @@ class Engine_cost_factors
 public:
   Cost_factor read_time;
   Cost_factor scan_time;
+  static const double DEFAULT_READ_TIME= 1;
+  static const double DEFAULT_SCAN_TIME= 1;
   st_factor all_names[MAX_ENGINE_CONSTANTS+1];
 
   Engine_cost_factors()
   {
-    read_time.value= 1;
-    scan_time.value= 1;
+    read_time.value= DEFAULT_READ_TIME;
+    scan_time.value= DEFAULT_SCAN_TIME;
+    set_all_names();
   }
 
   inline void set_all_names()
@@ -120,18 +124,21 @@ public:
   void set_engine_factor(const char *name, double value, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_engine_factor(uint index, ulonglong ops, double value);
-  inline void update_engine_factor(Engine_cost_factors that)
+  inline void update_engine_factor(Engine_cost_factors *that)
   {
-    read_time.update_all(that.read_time);
-    scan_time.update_all(that.scan_time);
+    read_time.update_all(that->read_time);
+    scan_time.update_all(that->scan_time);
   }
 };
+
+typedef std::map<uint, Engine_cost_factors*> engine_factor_map;
+typedef std::pair<uint, Engine_cost_factors*> engine_factor_pair;
 
 class Cost_factors
 {
 private:
   Global_cost_factors global;
-  std::map<uint, Engine_cost_factors> engine;
+  engine_factor_map engine;
   bool is_lock_initialized;
   bool has_unsaved_data;
 

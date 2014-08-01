@@ -56,7 +56,6 @@ void assign_factor_value(const char *const_name, double value, ulonglong total_o
 void Global_cost_factors::set_global_factor(const char *name, double value,
     ulonglong total_ops, double total_time, double total_time_squared)
 {
-  set_all_names();
   assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
@@ -76,7 +75,6 @@ void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double
 void Engine_cost_factors::set_engine_factor(const char *name, double value,
     ulonglong total_ops, double total_time, double total_time_squared)
 {
-  set_all_names();
   assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
 }
 
@@ -168,7 +166,17 @@ void Cost_factors::re_init(THD *thd)
       if(engine_plugin != NULL)
       {
         uint slot= plugin_data(engine_plugin, handlerton *)->slot;
-        engine[slot].set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+        engine_factor_map::iterator element= engine.find(slot);
+        if(element != engine.end())
+        {
+          element->second->set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+        }
+        else
+        {
+          Engine_cost_factors *new_element= new Engine_cost_factors();
+          new_element->set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+          engine.insert(engine_factor_pair(slot, new_element));
+        }
       }
     }
   }
@@ -183,12 +191,28 @@ end:
 
 double Cost_factors::read_factor(const handler *h) const
 {
-  return engine.find(h->ht->slot)->second.read_time.value;
+  engine_factor_map::const_iterator it= engine.find(h->ht->slot);
+  if(it != engine.end())
+  {
+    return it->second->read_time.value;
+  }
+  else
+  {
+    return Engine_cost_factors::DEFAULT_READ_TIME;
+  }
 }
 
 double Cost_factors::scan_factor(const handler *h) const
 {
-  return engine.find(h->ht->slot)->second.scan_time.value;
+  engine_factor_map::const_iterator it= engine.find(h->ht->slot);
+  if(it != engine.end())
+  {
+    return it->second->scan_time.value;
+  }
+  else
+  {
+    return Engine_cost_factors::DEFAULT_SCAN_TIME;
+  }
 }
 
 double Cost_factors::time_for_compare() const
@@ -210,7 +234,17 @@ void Cost_factors::update_cost_factor(uint index, ulonglong ops, double value)
   {
     uint engine_no = (index - MAX_GLOBAL_CONSTANTS)/ MAX_ENGINE_CONSTANTS;
     uint const_no = (index - MAX_GLOBAL_CONSTANTS) % MAX_ENGINE_CONSTANTS;
-    engine[engine_no].update_engine_factor(const_no, ops, value);
+    engine_factor_map::iterator element= engine.find(engine_no);
+    if(element != engine.end())
+    {
+      element->second->update_engine_factor(const_no, ops, value);
+    }
+    else
+    {
+      Engine_cost_factors *new_element= new Engine_cost_factors();
+      new_element->update_engine_factor(const_no, ops, value);
+      engine.insert(engine_factor_pair(engine_no, new_element));
+    }
   }
 }
 
@@ -218,9 +252,21 @@ void Cost_factors::add_data(Cost_factors that)
 {
   has_unsaved_data= true;
   global.update_global_factor(that.global);
-  for(std::map<uint, Engine_cost_factors>::iterator it= that.engine.begin();
+  for(engine_factor_map::iterator it= that.engine.begin();
       it!= that.engine.end(); it++)
-    engine[it->first].update_engine_factor(it->second);
+  {
+    engine_factor_map::iterator element= engine.find(it->first);
+    if(element != engine.end())
+    {
+      element->second->update_engine_factor(it->second);
+    }
+    else
+    {
+      Engine_cost_factors *new_element= new Engine_cost_factors();
+      new_element->update_engine_factor(it->second);
+      engine.insert(engine_factor_pair(it->first, new_element));
+    }
+  }
 }
 
 void Cost_factors::write_to_table()
@@ -289,12 +335,11 @@ void Cost_factors::write_to_table()
   }
 
   /* Write all engine specific factors */
-  for(std::map<uint, Engine_cost_factors>::iterator it= engine.begin();
-      it != engine.end(); it++)
+  for(engine_factor_map::iterator it= engine.begin(); it != engine.end(); it++)
   {
     /* Get the engine name from the slot number, it->first */
     LEX_STRING engine_name= hton2plugin[it->first]->name;
-    for(st_factor *f= it->second.all_names; f->name; f++)
+    for(st_factor *f= it->second->all_names; f->name; f++)
     {
       if(f->cost_factor->total_ops != 0)
       {
