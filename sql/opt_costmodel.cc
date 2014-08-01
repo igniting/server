@@ -269,6 +269,11 @@ void Cost_factors::write_to_table()
             key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
       {
         /* If the constant is not present, insert in table */
+        table->field[2]->store(f->cost_factor->value);
+        table->field[3]->store(f->cost_factor->total_ops);
+        table->field[4]->store(f->cost_factor->total_time);
+        table->field[5]->store(f->cost_factor->total_time_squared);
+        table->file->ha_write_row(table->record[0]);
       }
       else
       {
@@ -300,6 +305,11 @@ void Cost_factors::write_to_table()
               key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
         {
           /* If the constant is not present, insert in table */
+          table->field[2]->store(f->cost_factor->value);
+          table->field[3]->store(f->cost_factor->total_ops);
+          table->field[4]->store(f->cost_factor->total_time);
+          table->field[5]->store(f->cost_factor->total_time_squared);
+          table->file->ha_write_row(table->record[0]);
         }
         else
         {
