@@ -248,12 +248,12 @@ void Cost_factors::update_cost_factor(uint index, ulonglong ops, double value)
   }
 }
 
-void Cost_factors::add_data(Cost_factors that)
+void Cost_factors::add_data(Cost_factors *that)
 {
   has_unsaved_data= true;
-  global.update_global_factor(that.global);
-  for(engine_factor_map::iterator it= that.engine.begin();
-      it!= that.engine.end(); it++)
+  global.update_global_factor(that->global);
+  for(engine_factor_map::iterator it= that->engine.begin();
+      it!= that->engine.end(); it++)
   {
     engine_factor_map::iterator element= engine.find(it->first);
     if(element != engine.end())

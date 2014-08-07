@@ -899,7 +899,6 @@ THD::THD()
    wait_for_commit_ptr(0),
     main_da(0, false, false),
    m_stmt_da(&main_da),
-   thd_cost_factors(cost_factors),
    equation_no(0),
    unsaved_cost_factors(false),
    utime_before_query(0)
@@ -1531,7 +1530,7 @@ void THD::cleanup(void)
   if(unsaved_cost_factors)
   {
     mysql_mutex_lock(&cost_factors_lock);
-    cost_factors.add_data(thd_cost_factors);
+    cost_factors.add_data(&thd_cost_factors);
     mysql_mutex_unlock(&cost_factors_lock);
   }
 

@@ -158,12 +158,19 @@ public:
   void update_cost_factor(uint index, ulonglong total_ops, double value);
 
   /* Add data from another Cost_factors object */
-  void add_data(Cost_factors that);
+  void add_data(Cost_factors *that);
 
   /* Write data to optimizer_cost_factors table */
   void write_to_table();
 
   void cleanup();
+
+  ~Cost_factors()
+  {
+    for(engine_factor_map::iterator it= engine.begin(); it != engine.end(); it++)
+      delete it->second;
+    engine.clear();
+  }
 };
 
 extern Cost_factors cost_factors;
