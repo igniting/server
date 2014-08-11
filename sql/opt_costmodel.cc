@@ -82,11 +82,11 @@ void Engine_cost_factors::update_engine_factor(uint index, ulonglong ops, double
 {
   switch(index)
   {
-    case READ_TIME:
-      read_time.add_time(ops, value);
+    case READ_FACTOR:
+      read_factor.add_time(ops, value);
       break;
-    case SCAN_TIME:
-      scan_time.add_time(ops, value);
+    case SCAN_FACTOR:
+      scan_factor.add_time(ops, value);
       break;
   }
 }
@@ -194,11 +194,11 @@ double Cost_factors::read_factor(const handler *h) const
   engine_factor_map::const_iterator it= engine.find(h->ht->slot);
   if(it != engine.end())
   {
-    return it->second->read_time.value;
+    return it->second->read_factor.value;
   }
   else
   {
-    return Engine_cost_factors::DEFAULT_READ_TIME;
+    return Engine_cost_factors::DEFAULT_READ_FACTOR;
   }
 }
 
@@ -207,11 +207,11 @@ double Cost_factors::scan_factor(const handler *h) const
   engine_factor_map::const_iterator it= engine.find(h->ht->slot);
   if(it != engine.end())
   {
-    return it->second->scan_time.value;
+    return it->second->scan_factor.value;
   }
   else
   {
-    return Engine_cost_factors::DEFAULT_SCAN_TIME;
+    return Engine_cost_factors::DEFAULT_SCAN_FACTOR;
   }
 }
 

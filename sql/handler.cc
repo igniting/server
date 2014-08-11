@@ -2554,7 +2554,7 @@ int handler::ha_rnd_next(uchar *buf)
   else
     increment_statistics(&SSV::ha_read_rnd_next_count);
 
-  table->in_use->inc_coefficient(SCAN_TIME, ht->slot);
+  table->in_use->inc_coefficient(SCAN_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   DBUG_RETURN(result);
 }
@@ -2577,6 +2577,20 @@ int handler::ha_rnd_pos(uchar *buf, uchar *pos)
   DBUG_RETURN(result);
 }
 
+double handler::ha_scan_time()
+{
+  double time= scan_time();
+  table->in_use->set_extra_factor(SCAN_FACTOR, time, ht->slot);
+  return cost_factors.scan_factor(this) * time;
+}
+
+double handler::ha_read_time(uint index, uint ranges, ha_rows rows)
+{
+  double time= read_time(index, ranges, rows);
+  table->in_use->set_extra_factor(READ_FACTOR, time, ht->slot);
+  return cost_factors.read_factor(this) * time;
+}
+
 int handler::ha_index_read_map(uchar *buf, const uchar *key,
                                       key_part_map keypart_map,
                                       enum ha_rkey_function find_flag)
@@ -2592,7 +2606,7 @@ int handler::ha_index_read_map(uchar *buf, const uchar *key,
   increment_statistics(&SSV::ha_read_key_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   DBUG_RETURN(result);
 }
@@ -2620,7 +2634,7 @@ int handler::ha_index_read_idx_map(uchar *buf, uint index, const uchar *key,
     update_rows_read();
     index_rows_read[index]++;
   }
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   return result;
 }
@@ -2638,7 +2652,7 @@ int handler::ha_index_next(uchar * buf)
   increment_statistics(&SSV::ha_read_next_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   DBUG_RETURN(result);
 }
@@ -2656,7 +2670,7 @@ int handler::ha_index_prev(uchar * buf)
   increment_statistics(&SSV::ha_read_prev_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   DBUG_RETURN(result);
 }
@@ -2673,7 +2687,7 @@ int handler::ha_index_first(uchar * buf)
   increment_statistics(&SSV::ha_read_first_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   return result;
 }
@@ -2690,7 +2704,7 @@ int handler::ha_index_last(uchar * buf)
   increment_statistics(&SSV::ha_read_last_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   return result;
 }
@@ -2707,7 +2721,7 @@ int handler::ha_index_next_same(uchar *buf, const uchar *key, uint keylen)
   increment_statistics(&SSV::ha_read_next_count);
   if (!result)
     update_index_statistics();
-  table->in_use->inc_coefficient(READ_TIME, ht->slot);
+  table->in_use->inc_coefficient(READ_FACTOR, ht->slot);
   table->status=result ? STATUS_NOT_FOUND: 0;
   return result;
 }

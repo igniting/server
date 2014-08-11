@@ -6482,7 +6482,7 @@ void lsqr_mult(long mode, dvec *x, dvec *y, void *prod)
     for(i=0; i < num_rows; i++)
     {
       for(it=A[i].begin(); it!=A[i].end(); it++)
-        y->elements[i] += it->second.value*x->elements[it->first];
+        y->elements[i] += it->second.value()*x->elements[it->first];
     }
   }
   /*
@@ -6493,7 +6493,7 @@ void lsqr_mult(long mode, dvec *x, dvec *y, void *prod)
     for(i=0; i < num_rows; i++)
     {
       for(it=A[i].begin(); it!=A[i].end(); it++)
-        x->elements[it->first] += it->second.value*y->elements[i];
+        x->elements[it->first] += it->second.value()*y->elements[i];
     }
   }
 }
@@ -6527,7 +6527,7 @@ void THD::solve_equation()
       for(row_indx= 0; row_indx< num_rows; row_indx++)
       {
         thd_cost_factors.update_cost_factor(index,
-            coefficients[row_indx][index].value, out->sol_vec->elements[index]);
+            coefficients[row_indx][index].ops, out->sol_vec->elements[index]);
       }
     }
   }

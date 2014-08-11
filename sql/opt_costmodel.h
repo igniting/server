@@ -13,8 +13,8 @@ class handler;
 #define TIME_FOR_COMPARE 0
 #define TIME_FOR_COMPARE_ROWID 1
 #define MAX_ENGINE_CONSTANTS 2
-#define READ_TIME 0
-#define SCAN_TIME 1
+#define READ_FACTOR 0
+#define SCAN_FACTOR 1
 
 inline uint get_factor_index(uint offset, int engine_index=-1)
 {
@@ -103,31 +103,31 @@ public:
 class Engine_cost_factors
 {
 public:
-  Cost_factor read_time;
-  Cost_factor scan_time;
-  static const double DEFAULT_READ_TIME= 1;
-  static const double DEFAULT_SCAN_TIME= 1;
+  Cost_factor read_factor;
+  Cost_factor scan_factor;
+  static const double DEFAULT_READ_FACTOR= 1;
+  static const double DEFAULT_SCAN_FACTOR= 1;
   st_factor all_names[MAX_ENGINE_CONSTANTS+1];
 
   Engine_cost_factors()
   {
-    read_time.value= DEFAULT_READ_TIME;
-    scan_time.value= DEFAULT_SCAN_TIME;
+    read_factor.value= DEFAULT_READ_FACTOR;
+    scan_factor.value= DEFAULT_SCAN_FACTOR;
     set_all_names();
   }
 
   inline void set_all_names()
   {
-    all_names[0]= st_factor("READ_TIME_FACTOR", &read_time);
-    all_names[1]= st_factor("SCAN_TIME_FACTOR", &scan_time);
+    all_names[0]= st_factor("READ_TIME_FACTOR", &read_factor);
+    all_names[1]= st_factor("SCAN_TIME_FACTOR", &scan_factor);
   }
   void set_engine_factor(const char *name, double value, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_engine_factor(uint index, ulonglong ops, double value);
   inline void update_engine_factor(Engine_cost_factors *that)
   {
-    read_time.update_all(that->read_time);
-    scan_time.update_all(that->scan_time);
+    read_factor.update_all(that->read_factor);
+    scan_factor.update_all(that->scan_factor);
   }
 };
 
@@ -177,13 +177,17 @@ extern Cost_factors cost_factors;
 extern mysql_mutex_t cost_factors_lock;
 
 /* Structure to store coefficients of system of linear equations */
-struct eq_coefficient
+class eq_coefficient
 {
-  ulonglong value;
+public:
+  ulonglong ops;
+  double extra_factor;
   eq_coefficient()
   {
-    value= 0;
+    ops= 0;
+    extra_factor= 1;
   }
+  inline double value() { return ops*extra_factor; }
 };
 
 #endif /* SQL_OPT_COSTMODEL_INCLUDED */

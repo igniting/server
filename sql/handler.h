@@ -2761,11 +2761,8 @@ protected:
   { return rows2double(ranges+rows); }
 
 public:
-  double ha_scan_time()
-  { return cost_factors.scan_factor(this) * scan_time(); }
-
-  double ha_read_time(uint index, uint ranges, ha_rows rows)
-  { return cost_factors.read_factor(this) * read_time(index, ranges, rows); }
+  double ha_scan_time();
+  double ha_read_time(uint index, uint ranges, ha_rows rows);
 
   /**
     Calculate cost of 'keyread' scan for given index and number of records.

@@ -3740,7 +3740,11 @@ public:
   ulonglong utime_before_query;
   inline void inc_coefficient(uint factor, int engine_index= -1)
   {
-    coefficients[equation_no][get_factor_index(factor, engine_index)].value++;
+    coefficients[equation_no][get_factor_index(factor, engine_index)].ops++;
+  }
+  inline void set_extra_factor(uint factor, double factor_value, int engine_index= -1)
+  {
+    coefficients[equation_no][get_factor_index(factor, engine_index)].extra_factor= factor_value;
   }
   void build_equation();
   void solve_equation();
