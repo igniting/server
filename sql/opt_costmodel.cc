@@ -308,6 +308,7 @@ void Cost_factors::write_to_table()
   {
     if(f->cost_factor->total_ops != 0)
     {
+      f->cost_factor->value= f->cost_factor->total_time/f->cost_factor->total_ops;
       table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
       table->field[1]->store("", 0, system_charset_info);
       key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
@@ -343,6 +344,7 @@ void Cost_factors::write_to_table()
     {
       if(f->cost_factor->total_ops != 0)
       {
+        f->cost_factor->value= f->cost_factor->total_time/f->cost_factor->total_ops;
         table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
         table->field[1]->store(engine_name.str, engine_name.length, system_charset_info);
         key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
