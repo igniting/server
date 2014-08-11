@@ -6500,6 +6500,18 @@ void lsqr_mult(long mode, dvec *x, dvec *y, void *prod)
 
 void THD::solve_equation()
 {
+  std::ofstream datafile;
+  char file_name[100];
+  my_snprintf(file_name, 100, "/tmp/mariadb_cost_coefficients_%lu_%lu.txt", thread_id, real_id);
+  datafile.open(file_name, std::ios::app);
+  for(uint i=0; i < equation_no; i++)
+  {
+    for(uint j=0; j < MAX_CONSTANTS; j++)
+      datafile << coefficients[i][j].value() << " ";
+    datafile << query_time[i] << "\n";
+  }
+  datafile.close();
+  
   lsqr_input   *in;
   lsqr_output  *out;
   lsqr_work    *work;
