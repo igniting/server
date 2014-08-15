@@ -90,7 +90,7 @@ public:
     all_names[0] = st_factor("TIME_FOR_COMPARE", &time_for_compare);
     all_names[1] = st_factor("TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid);
   }
-  void set_global_factor(const char *name, double value, ulonglong total_ops,
+  void set_global_factor(const char *name, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_global_factor(uint index, ulonglong ops, double value);
   inline void update_global_factor(Global_cost_factors that)
@@ -121,7 +121,7 @@ public:
     all_names[0]= st_factor("READ_TIME_FACTOR", &read_factor);
     all_names[1]= st_factor("SCAN_TIME_FACTOR", &scan_factor);
   }
-  void set_engine_factor(const char *name, double value, ulonglong total_ops,
+  void set_engine_factor(const char *name, ulonglong total_ops,
       double total_time, double total_time_squared);
   void update_engine_factor(uint index, ulonglong ops, double value);
   inline void update_engine_factor(Engine_cost_factors *that)

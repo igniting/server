@@ -14,7 +14,6 @@ enum cost_factors_col
 {
   COST_FACTORS_CONST_NAME,
   COST_FACTORS_ENGINE_NAME,
-  COST_FACTORS_CONST_VALUE,
   COST_FACTORS_TOTAL_OPS,
   COST_FACTORS_TOTAL_TIME,
   COST_FACTORS_TOTAL_TIME_SQUARED
@@ -31,7 +30,7 @@ inline int open_table(THD *thd, TABLE_LIST *table,
   return open_system_tables_for_read(thd, table, backup);
 }
 
-void assign_factor_value(const char *const_name, double value, ulonglong total_ops,
+void assign_factor_value(const char *const_name, ulonglong total_ops,
     double total_time, double total_time_squared, st_factor *factors)
 {
   st_factor *f;
@@ -39,10 +38,13 @@ void assign_factor_value(const char *const_name, double value, ulonglong total_o
   {
     if(strcasecmp(f->name, const_name) == 0)
     {
-      f->cost_factor->value= value;
       f->cost_factor->total_ops= total_ops;
       f->cost_factor->total_time= total_time;
       f->cost_factor->total_time_squared= total_time_squared;
+      if(total_ops != 0)
+      {
+        f->cost_factor->value= total_time/total_ops;
+      }
       break;
     }
   }
@@ -53,10 +55,10 @@ void assign_factor_value(const char *const_name, double value, ulonglong total_o
   }
 }
 
-void Global_cost_factors::set_global_factor(const char *name, double value,
-    ulonglong total_ops, double total_time, double total_time_squared)
+void Global_cost_factors::set_global_factor(const char *name, ulonglong total_ops,
+    double total_time, double total_time_squared)
 {
-  assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
+  assign_factor_value(name, total_ops, total_time, total_time_squared, all_names);
 }
 
 void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double value)
@@ -72,10 +74,10 @@ void Global_cost_factors::update_global_factor(uint index, ulonglong ops, double
   }
 }
 
-void Engine_cost_factors::set_engine_factor(const char *name, double value,
-    ulonglong total_ops, double total_time, double total_time_squared)
+void Engine_cost_factors::set_engine_factor(const char *name, ulonglong total_ops,
+    double total_time, double total_time_squared)
 {
-  assign_factor_value(name, value, total_ops, total_time, total_time_squared, all_names);
+  assign_factor_value(name, total_ops, total_time, total_time_squared, all_names);
 }
 
 void Engine_cost_factors::update_engine_factor(uint index, ulonglong ops, double value)
@@ -149,7 +151,6 @@ void Cost_factors::re_init(THD *thd)
     char *const_name= get_field(&mem, table->field[COST_FACTORS_CONST_NAME]);
     LEX_STRING engine_name;
     engine_name.str= get_field(&mem, table->field[COST_FACTORS_ENGINE_NAME]);
-    double const_value= table->field[COST_FACTORS_CONST_VALUE]->val_real();
     ulonglong total_ops= (ulonglong) table->field[COST_FACTORS_TOTAL_OPS]->val_int();
     double total_time= table->field[COST_FACTORS_TOTAL_TIME]->val_real();
     double total_time_squared= table->field[COST_FACTORS_TOTAL_TIME_SQUARED]->val_real();
@@ -157,7 +158,7 @@ void Cost_factors::re_init(THD *thd)
     // Engine name is null for global cost factors
     if(!engine_name.str)
     {
-      global.set_global_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+      global.set_global_factor(const_name, total_ops, total_time, total_time_squared);
     }
     else
     {
@@ -169,12 +170,12 @@ void Cost_factors::re_init(THD *thd)
         engine_factor_map::iterator element= engine.find(slot);
         if(element != engine.end())
         {
-          element->second->set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+          element->second->set_engine_factor(const_name, total_ops, total_time, total_time_squared);
         }
         else
         {
           Engine_cost_factors *new_element= new Engine_cost_factors();
-          new_element->set_engine_factor(const_name, const_value, total_ops, total_time, total_time_squared);
+          new_element->set_engine_factor(const_name, total_ops, total_time, total_time_squared);
           engine.insert(engine_factor_pair(slot, new_element));
         }
       }
@@ -308,7 +309,6 @@ void Cost_factors::write_to_table()
   {
     if(f->cost_factor->total_ops != 0)
     {
-      f->cost_factor->value= f->cost_factor->total_time/f->cost_factor->total_ops;
       table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
       table->field[1]->store("", 0, system_charset_info);
       key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
@@ -316,20 +316,18 @@ void Cost_factors::write_to_table()
             key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
       {
         /* If the constant is not present, insert in table */
-        table->field[2]->store(f->cost_factor->value);
-        table->field[3]->store(f->cost_factor->total_ops);
-        table->field[4]->store(f->cost_factor->total_time);
-        table->field[5]->store(f->cost_factor->total_time_squared);
+        table->field[2]->store(f->cost_factor->total_ops);
+        table->field[3]->store(f->cost_factor->total_time);
+        table->field[4]->store(f->cost_factor->total_time_squared);
         table->file->ha_write_row(table->record[0]);
       }
       else
       {
         /* Update the column */
         store_record(table, record[1]);
-        table->field[2]->store(f->cost_factor->value);
-        table->field[3]->store(f->cost_factor->total_ops);
-        table->field[4]->store(f->cost_factor->total_time);
-        table->field[5]->store(f->cost_factor->total_time_squared);
+        table->field[2]->store(f->cost_factor->total_ops);
+        table->field[3]->store(f->cost_factor->total_time);
+        table->field[4]->store(f->cost_factor->total_time_squared);
         table->file->ha_update_row(table->record[1], table->record[0]);
       }
     }
@@ -344,7 +342,6 @@ void Cost_factors::write_to_table()
     {
       if(f->cost_factor->total_ops != 0)
       {
-        f->cost_factor->value= f->cost_factor->total_time/f->cost_factor->total_ops;
         table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
         table->field[1]->store(engine_name.str, engine_name.length, system_charset_info);
         key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
@@ -352,20 +349,18 @@ void Cost_factors::write_to_table()
               key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
         {
           /* If the constant is not present, insert in table */
-          table->field[2]->store(f->cost_factor->value);
-          table->field[3]->store(f->cost_factor->total_ops);
-          table->field[4]->store(f->cost_factor->total_time);
-          table->field[5]->store(f->cost_factor->total_time_squared);
+          table->field[2]->store(f->cost_factor->total_ops);
+          table->field[3]->store(f->cost_factor->total_time);
+          table->field[4]->store(f->cost_factor->total_time_squared);
           table->file->ha_write_row(table->record[0]);
         }
         else
         {
           /* Update the column */
           store_record(table, record[1]);
-          table->field[2]->store(f->cost_factor->value);
-          table->field[3]->store(f->cost_factor->total_ops);
-          table->field[4]->store(f->cost_factor->total_time);
-          table->field[5]->store(f->cost_factor->total_time_squared);
+          table->field[2]->store(f->cost_factor->total_ops);
+          table->field[3]->store(f->cost_factor->total_time);
+          table->field[4]->store(f->cost_factor->total_time_squared);
           table->file->ha_update_row(table->record[1], table->record[0]);
         }
       }
