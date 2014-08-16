@@ -27,29 +27,29 @@ class Cost_factor
 {
 public:
   double value;
-  ulonglong total_ops;
-  double total_time;
-  double total_time_squared;
+  ulonglong count;
+  double sum;
+  double sum_squared;
   
   Cost_factor()
   {
-    total_ops= 0;
-    total_time= 0;
-    total_time_squared= 0;
+    count= 0;
+    sum= 0;
+    sum_squared= 0;
   }
 
-  inline void add_time(ulonglong ops, double value)
+  inline void add_value(double value)
   {
-    total_ops+= ops;
-    total_time += (ops*value);
-    total_time_squared += (ops*value)*(ops*value);
+    count++;
+    sum += value;
+    sum_squared += value*value;
   }
 
   inline void update_all(Cost_factor that)
   {
-    total_ops+= that.total_ops;
-    total_time+= that.total_time;
-    total_time_squared+= that.total_time_squared;
+    count+= that.count;
+    sum+= that.sum;
+    sum_squared+= that.sum_squared;
   }
 };
 
@@ -90,9 +90,9 @@ public:
     all_names[0] = st_factor("TIME_FOR_COMPARE", &time_for_compare);
     all_names[1] = st_factor("TIME_FOR_COMPARE_ROWID", &time_for_compare_rowid);
   }
-  void set_global_factor(const char *name, ulonglong total_ops,
-      double total_time, double total_time_squared);
-  void update_global_factor(uint index, ulonglong ops, double value);
+  void set_global_factor(const char *name, ulonglong count,
+      double sum, double sum_squared);
+  void update_global_factor(uint index, double value);
   inline void update_global_factor(Global_cost_factors that)
   {
     time_for_compare.update_all(that.time_for_compare);
@@ -121,9 +121,9 @@ public:
     all_names[0]= st_factor("READ_TIME_FACTOR", &read_factor);
     all_names[1]= st_factor("SCAN_TIME_FACTOR", &scan_factor);
   }
-  void set_engine_factor(const char *name, ulonglong total_ops,
-      double total_time, double total_time_squared);
-  void update_engine_factor(uint index, ulonglong ops, double value);
+  void set_engine_factor(const char *name, ulonglong count,
+      double sum, double sum_squared);
+  void update_engine_factor(uint index, double value);
   inline void update_engine_factor(Engine_cost_factors *that)
   {
     read_factor.update_all(that->read_factor);
@@ -155,7 +155,7 @@ public:
   double time_for_compare_rowid() const;
 
   /* Update a cost factor */
-  void update_cost_factor(uint index, ulonglong total_ops, double value);
+  void update_cost_factor(uint index, double value);
 
   /* Add data from another Cost_factors object */
   void add_data(Cost_factors *that);

@@ -6527,7 +6527,7 @@ void THD::solve_equation()
       for(row_indx= 0; row_indx< num_rows; row_indx++)
       {
         thd_cost_factors.update_cost_factor(index,
-            coefficients[row_indx][index].ops, out->sol_vec->elements[index]);
+            out->sol_vec->elements[index]);
       }
     }
   }
