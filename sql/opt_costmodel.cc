@@ -337,31 +337,34 @@ void Cost_factors::write_to_table()
   for(engine_factor_map::iterator it= engine.begin(); it != engine.end(); it++)
   {
     /* Get the engine name from the slot number, it->first */
-    LEX_STRING engine_name= hton2plugin[it->first]->name;
-    for(st_factor *f= it->second->all_names; f->name; f++)
+    if(hton2plugin[it->first])
     {
-      if(f->cost_factor->count != 0)
+      LEX_STRING engine_name= hton2plugin[it->first]->name;
+      for(st_factor *f= it->second->all_names; f->name; f++)
       {
-        table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
-        table->field[1]->store(engine_name.str, engine_name.length, system_charset_info);
-        key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
-        if (table->file->ha_index_read_idx_map(table->record[0], 0,
-              key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
+        if(f->cost_factor->count != 0)
         {
-          /* If the constant is not present, insert in table */
-          table->field[2]->store(f->cost_factor->count);
-          table->field[3]->store(f->cost_factor->sum);
-          table->field[4]->store(f->cost_factor->sum_squared);
-          table->file->ha_write_row(table->record[0]);
-        }
-        else
-        {
-          /* Update the column */
-          store_record(table, record[1]);
-          table->field[2]->store(f->cost_factor->count);
-          table->field[3]->store(f->cost_factor->sum);
-          table->field[4]->store(f->cost_factor->sum_squared);
-          table->file->ha_update_row(table->record[1], table->record[0]);
+          table->field[0]->store(f->name, (uint) strlen(f->name), system_charset_info);
+          table->field[1]->store(engine_name.str, engine_name.length, system_charset_info);
+          key_copy(key, table->record[0], table->key_info, table->key_info->key_length);
+          if (table->file->ha_index_read_idx_map(table->record[0], 0,
+                key, HA_WHOLE_KEY, HA_READ_KEY_EXACT))
+          {
+            /* If the constant is not present, insert in table */
+            table->field[2]->store(f->cost_factor->count);
+            table->field[3]->store(f->cost_factor->sum);
+            table->field[4]->store(f->cost_factor->sum_squared);
+            table->file->ha_write_row(table->record[0]);
+          }
+          else
+          {
+            /* Update the column */
+            store_record(table, record[1]);
+            table->field[2]->store(f->cost_factor->count);
+            table->field[3]->store(f->cost_factor->sum);
+            table->field[4]->store(f->cost_factor->sum_squared);
+            table->file->ha_update_row(table->record[1], table->record[0]);
+          }
         }
       }
     }
