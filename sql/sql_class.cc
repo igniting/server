@@ -6524,11 +6524,8 @@ void THD::solve_equation()
   {
     if(out->sol_vec->elements[index] != 0)
     {
-      for(row_indx= 0; row_indx< num_rows; row_indx++)
-      {
-        thd_cost_factors.update_cost_factor(index,
-            out->sol_vec->elements[index]);
-      }
+      thd_cost_factors.update_cost_factor(index,
+          out->sol_vec->elements[index]);
     }
   }
   free_lsqr_mem(in, out, work, func);
