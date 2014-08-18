@@ -6458,10 +6458,10 @@ void THD::build_equation()
   {
     solve_equation();
     /* Reset everything */
+    for(uint i= 0; i < MAX_EQUATIONS; i++)
+      coefficients[i].clear();
     equation_no= 0;
     utime_before_query= 0;
-    for(uint i= 0; i < equation_no; i++)
-      coefficients[i].clear();
   }
 }
 
